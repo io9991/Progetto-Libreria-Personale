@@ -14,7 +14,7 @@ public class Form extends JFrame{
         super(titolo);
 
         //settiamo le dimensioni
-        setSize(820, 620);
+        setSize(1200, 807);
 
         //configuro la GUI in modo tale che metta fine al processo quando chiuso
         setDefaultCloseOperation(EXIT_ON_CLOSE);

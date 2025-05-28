@@ -1,4 +1,4 @@
-//creazione del libro
+package builder;//creazione del libro
 
 public class Libro {
 
@@ -9,6 +9,29 @@ public class Libro {
     private int valutazione;
     private Stato stato;
 
+    public String getAutore() {
+        return autore;
+    }
+
+    public String getCodice_ISBN() {
+        return codice_ISBN;
+    }
+
+    public String getGenere_appartenenza() {
+        return genere_appartenenza;
+    }
+
+    public Stato getStato() {
+        return stato;
+    }
+
+    public String getTitolo() {
+        return titolo;
+    }
+
+    public int getValutazione() {
+        return valutazione;
+    }
 
     //creo il builder
     public static class Builder{
@@ -51,7 +74,17 @@ public class Libro {
             return this;
         }
 
+        public Libro build(){
+            if(titolo == null || autore == null || codice_ISBN == null){
+                throw new IllegalStateException("completa");
+            }
+
+            return new Libro(this);
+        }
+
     }
+
+
 
 
     private Libro(Builder builder){
