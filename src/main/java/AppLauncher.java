@@ -3,7 +3,7 @@
 import builder.Libro;
 import builder.Stato;
 import gui.*;
-import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLightLaf;
 import javax.swing.*;
 
 public class AppLauncher {
@@ -16,7 +16,7 @@ public class AppLauncher {
             //metodo run
             @Override
             public void run() {
-                FlatDarkLaf.setup();
+                FlatLightLaf.setup();
                 //istanziamo un form di login e rendiamolo visibile
                 new HomeForm("Libreria").setVisible(true);
                // new PanelLibro(l);

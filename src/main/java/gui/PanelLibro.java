@@ -1,76 +1,4 @@
-/*
 
-package gui;
-
-import constants.Common_constants;
-
-import javax.swing.*;
-import java.awt.*;
-
-public class PanelLibro extends JPanel {
-
-    private static final int larghezza = 200;
-    private static final int altezza = 250;
-
-    private int valutazione;
-
-    public PanelLibro(String titolo, String autore, String isbn, String statoLettura, int valutazione) {
-
-        //salvo valutazione
-        this.valutazione = valutazione;
-
-        setLayout(new BorderLayout(5,5));
-        setPreferredSize(new Dimension(larghezza, altezza)); // box fisso
-        setMinimumSize(new Dimension(larghezza, altezza));
-        setMaximumSize(new Dimension(larghezza, altezza));
-        // Bordo per distinguere
-        setBorder(BorderFactory.createLineBorder(Common_constants.colore_font_titoli, 2));
-        setBackground(Common_constants.colore_secondario);
-
-        //pannello informazioni principali
-        //utilizzo un box
-        JPanel info = new JPanel();
-        info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
-        info.setOpaque(false);
-        info.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 10));
-
-        // Titolo (in alto)
-        JLabel titoloLabel = new JLabel("<html><b>" + titolo + "</b></html>");
-        titoloLabel.setForeground(Common_constants.colore_font_titoli);
-        titoloLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        titoloLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-
-        JLabel autoreLabel = new JLabel("Autore" + autore );
-        autoreLabel.setForeground(Common_constants.colore_font_titoli);
-        autoreLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        autoreLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        //add(titoloLabel, BorderLayout.NORTH);
-
-        JLabel isbnLabel = new JLabel("ISBN" + isbn );
-        autoreLabel.setForeground(Common_constants.colore_font_titoli);
-        autoreLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        autoreLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        info.add(titoloLabel);
-        info.add(Box.createVerticalStrut(5));
-        info.add(autoreLabel);
-        info.add(Box.createVerticalStrut(5));
-        info.add(isbnLabel);
-        //spingo i componenti verso l'alto
-        info.add(Box.createVerticalGlue());
-
-        add(info, BorderLayout.CENTER);
-
-        //parte inferiore del pannello  todo
-
-
-    }
-
-}
-
-
- */
 
 // PanelLibro.java
 package gui;
@@ -103,7 +31,7 @@ public class PanelLibro extends JPanel {
     }
 
     public PanelLibro(Libro libro) {
-        this.libro = Objects.requireNonNull(libro, "L'oggetto Libro non può essere null.");
+       // this.libro = Objects.requireNonNull(libro, "L'oggetto Libro non può essere null.");
 
         setLayout(new BorderLayout(5, 5));
         setPreferredSize(new Dimension(larghezza, altezza));
@@ -112,7 +40,7 @@ public class PanelLibro extends JPanel {
         setBorder(BorderFactory.createLineBorder(Common_constants.colore_font_titoli, 2));
         setBackground(Common_constants.colore_secondario);
 
-        // Aggiungi un MouseListener per rendere l'intero pannello cliccabile
+        // MouseListener per rendere l'intero pannello cliccabile
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -125,7 +53,7 @@ public class PanelLibro extends JPanel {
             @Override
             public void mouseEntered(MouseEvent e) {
                 setCursor(new Cursor(Cursor.HAND_CURSOR));
-                setBorder(BorderFactory.createLineBorder(Common_constants.colore_font_dettagli, 3));
+                setBorder(BorderFactory.createLineBorder(Common_constants.colore_menu_modifica, 3));
             }
 
             @Override
@@ -147,12 +75,12 @@ public class PanelLibro extends JPanel {
         titoloLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel autoreLabel = new JLabel("Autore: " + libro.getAutore());
-        autoreLabel.setForeground(Common_constants.colore_font_dettagli);
+        autoreLabel.setForeground(Common_constants.colore_font_titoli);
         autoreLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         autoreLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel isbnLabel = new JLabel("ISBN: " + libro.getCodice_ISBN());
-        isbnLabel.setForeground(Common_constants.colore_font_dettagli);
+        isbnLabel.setForeground(Common_constants.colore_font_titoli);
         isbnLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         isbnLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -170,26 +98,28 @@ public class PanelLibro extends JPanel {
         bottomPanel.setOpaque(false);
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 5, 5));
 
+        /*
         JLabel statoLabel = new JLabel("Stato: " + formatStato(libro.getStato()));
         statoLabel.setForeground(Common_constants.colore_font_dettagli);
         statoLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         bottomPanel.add(statoLabel, BorderLayout.WEST);
+         */
 
-        JPanel ratingAndDeletePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        JPanel ratingAndDeletePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
         ratingAndDeletePanel.setOpaque(false);
 
         JPanel starPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         starPanel.setOpaque(false);
         for (int i = 1; i <= 5; i++) {
-            JLabel star = new JLabel("★");
-            star.setForeground(i <= libro.getValutazione() ? Common_constants.colore_font_titoli : Common_constants.colore_font_dettagli);
+            JLabel star = new JLabel("°");
+            star.setForeground(i <= libro.getValutazione() ? Common_constants.colore_stella_piena : Common_constants.colore_secondario);
             star.setFont(new Font("Arial", Font.BOLD, 18));
             starPanel.add(star);
         }
         ratingAndDeletePanel.add(starPanel);
 
         JButton deleteButton = new JButton("X");
-        deleteButton.setBackground(Common_constants.colore_secondario);
+        deleteButton.setBackground(Common_constants.colore_bottoni);
         deleteButton.setForeground(Common_constants.colore_font_titoli);
         deleteButton.setPreferredSize(new Dimension(30, 30));
         deleteButton.setBorder(BorderFactory.createEmptyBorder());
