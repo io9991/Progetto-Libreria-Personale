@@ -4,7 +4,9 @@ package db;
 
 //importo quello che mi serve
 import java.sql.*;
+import java.util.List;
 
+import builder.Libro;
 import constants.Common_constants;
 import constants.Common_constants.*;
 
@@ -56,6 +58,59 @@ public class MyJavaDBC {
         }
 
     }
+
+
+
+    //metodi per aggiunger, rimuovere
+    public void inserisciLibro(Libro libro){
+
+        try {
+
+            PreparedStatement aggiunta = connection.prepareStatement(
+               "INSERT INTO " + Common_constants.DB_LIBRI_TABLE_NAME +
+                       "(titolo, autore, codice, genere, valutazione, stato)" +
+                       "VALUES(?, ?, ?, ?, ?, ?)"
+            );
+
+            aggiunta.setString(1, libro.getTitolo());
+            aggiunta.setString(2, libro.getAutore());
+            aggiunta.setString(3, libro.getCodice_ISBN());
+            aggiunta.setString(4, libro.getGenere_appartenenza());
+            aggiunta.setInt(5, libro.getValutazione());
+            aggiunta.setString(6, libro.getStato().name());
+
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+
+    }
+
+    public void deleteLibro(Libro libro){
+
+        try{
+
+            PreparedStatement rimuovi = connection.prepareStatement(
+                    "DELETE FROM" + Common_constants.DB_LIBRI_TABLE_NAME + "WHERE codISBN = ?"
+            );
+
+
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+    }
+
+
+    //todo
+    public void updateLibro(){
+
+    }
+
+    //todo
+    public List<Libro> getAllLibri(){
+
+    }
+
+
 
 
 }
