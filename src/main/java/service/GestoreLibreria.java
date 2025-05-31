@@ -5,6 +5,10 @@ import builder.Libro;
 import db.MyJavaDBC;
 import observer.Observer;
 import observer.Subject;
+import repository.LibroRepository;
+import repository.LibroRepositoryImpl;
+
+import java.sql.SQLException;
 import java.util.*;
 
 //qui viene inserito il concreteSubject che quindi va a realizzare l'interfaccia subject
@@ -17,12 +21,11 @@ public class GestoreLibreria implements Subject{
     //lista di osservatori
     private List<Observer> osservatori;
     //riferimento alla connessione
-    private MyJavaDBC dataBaseConnection;
+    private LibroRepository libroRepository; //fa riferimento al libro repository
 
-    public GestoreLibreria(){
+    private GestoreLibreria(){
         osservatori = new ArrayList<>();
-        //connessione al db
-        dataBaseConnection = MyJavaDBC.getInstance();
+        this.libroRepository = new LibroRepositoryImpl();
     }
 
     public static synchronized GestoreLibreria getInstance(){
@@ -60,31 +63,31 @@ public class GestoreLibreria implements Subject{
     }
 
 
-    public void aggiungiLibro(Libro libro){
+    public void aggiungiLibro(Libro libro) throws SQLException{
         try {
-
+            libroRepository.inserisciLibro(libro);
+            notifyObserver();
         }catch (Exception e){
             e.printStackTrace();
         }
     }
 
 
-    public void rimuoviLibro(Libro libro){
-
+    public void rimuoviLibro(Libro libro) throws SQLException {
+        libroRepository.eliminaLibro(libro);
+        notifyObserver();
     }
 
-    public List<Libro> restituisciLibri(){
-
+    public List<Libro> restituisciLibri() throws SQLException{
+        return libroRepository.tuttiLibri();
     }
 
-    //todo modifica libro
-
-    //update db
-    public void aggiornaLibro(Libro libro){
+    public void aggiornaLibro(Libro libro) throws SQLException{
         try {
-
+            libroRepository.modificaLibro(libro);
+            notifyObserver();
         }catch(Exception e){
-
+            e.printStackTrace();
         }
     }
 
