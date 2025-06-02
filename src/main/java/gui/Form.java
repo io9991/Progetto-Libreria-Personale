@@ -17,7 +17,7 @@ public class Form extends JFrame{
         setSize(1200, 807);
 
         //configuro la GUI in modo tale che metta fine al processo quando chiuso
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+       // setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         //in questo modo possiamo posizionare i component dove vogliamo
         setLayout(null);

@@ -2,9 +2,11 @@
 //importo le dovute librerie
 import builder.Libro;
 import builder.Stato;
+//import com.formdev.flatlaf.FlatDarculaLaf;
 import gui.*;
-import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.*;
 import javax.swing.*;
+import java.sql.SQLException;
 
 public class AppLauncher {
 
@@ -16,10 +18,17 @@ public class AppLauncher {
             //metodo run
             @Override
             public void run() {
-                FlatLightLaf.setup();
+                //FlatLightLaf.setup();
+                FlatDarculaLaf.setup();
                 //istanziamo un form di login e rendiamolo visibile
-                new HomeForm("Libreria").setVisible(true);
-               // new PanelLibro(l);
+                try {
+                    HomeForm homeForm = new HomeForm("Private Library");
+                    homeForm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // SOLO QUI
+                    homeForm.setVisible(true);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+                // new PanelLibro(l);
             }
         });
 

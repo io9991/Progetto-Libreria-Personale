@@ -111,16 +111,16 @@ public class PanelLibro extends JPanel {
         JPanel starPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         starPanel.setOpaque(false);
         for (int i = 1; i <= 5; i++) {
-            JLabel star = new JLabel("°");
+            JLabel star = new JLabel("★");
             star.setForeground(i <= libro.getValutazione() ? Common_constants.colore_stella_piena : Common_constants.colore_secondario);
-            star.setFont(new Font("Arial", Font.BOLD, 18));
+            star.setFont(new Font("Dialog", Font.BOLD, 18));
             starPanel.add(star);
         }
         ratingAndDeletePanel.add(starPanel);
 
         JButton deleteButton = new JButton("X");
-        deleteButton.setBackground(Common_constants.colore_bottoni);
-        deleteButton.setForeground(Common_constants.colore_font_titoli);
+        deleteButton.setBackground(Common_constants.colore_secondario);
+        deleteButton.setForeground(Common_constants.colore_croce);
         deleteButton.setPreferredSize(new Dimension(30, 30));
         deleteButton.setBorder(BorderFactory.createEmptyBorder());
         deleteButton.setFocusPainted(false);

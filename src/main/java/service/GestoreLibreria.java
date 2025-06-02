@@ -53,7 +53,7 @@ public class GestoreLibreria implements Subject{
     }
 
     @Override
-    public void notifyObserver() {
+    public void notifyObserver() throws SQLException {
         //creo una copia per evitare ConcurrentModificationException
         List<Observer> osservatoriCopia = new ArrayList<>(this.osservatori);
         for (Observer o : osservatoriCopia){

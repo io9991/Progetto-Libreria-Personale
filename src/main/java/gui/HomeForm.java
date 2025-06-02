@@ -4,29 +4,40 @@ package gui;
 import java.awt.*;
 import constants.*;
 import javax.swing.*;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors; // Per il filtraggio
 
 import builder.Libro; // Assicurati che l'importazione sia corretta per la classe Libro
 import builder.Stato; // Assicurati che l'importazione sia corretta per l'enum Stato
+import observer.Observer;
+import service.GestoreLibreria;
 
 // Per ora, non implementiamo LibreriaObserver e LibreriaManager
 // observer.LibreriaObserver;
 // service.LibreriaManager;
 
 
-public class HomeForm extends Form {
+public class HomeForm extends Form implements Observer {
 
     private JPanel mainContentPanel; // Pannello principale che conterrà le categorie scrollabili
+    //riferimento a gestione libreria
+    private GestoreLibreria gestoreLibreria;
 
-    public HomeForm(String titolo) {
+    public HomeForm(String titolo) throws SQLException {
         super(titolo);
+        //istanza di gestione
+        this.gestoreLibreria = GestoreLibreria.getInstance();
+        //home form sarà un osservatore
+        //quindi richiamo il metodo attach
+        this.gestoreLibreria.attach(this);
         getContentPane().setLayout(new BorderLayout());
         addGuiComponent();
 
-        // Popola la GUI con dati di prova divisi per categoria
-        refreshLibriCategoriesMock();
+        // questo va ad utilizzare i dati reali
+        refreshLibriCategories();
     }
 
     private void addGuiComponent(){
@@ -99,28 +110,22 @@ public class HomeForm extends Form {
 
         getContentPane().add(latoOperazioni, BorderLayout.EAST);
 
-        // Listener per il pulsante "Aggiungi" (aggiunge un libro mock e ricarica le categorie)
+
+        //todo controlla
         aggiungi.addActionListener(e -> {
-            Libro newLibro = new Libro.Builder()
-                    .setTitolo("Libro Aggiunto " + (int)(Math.random() * 100))
-                    .setAutore("Autore Casuale")
-                    .setCodiceISBN("NEW-" + (int)(Math.random() * 10000))
-                    .setGenereAppartenenza("Nuovo Genere")
-                    .setValutazione((int)(Math.random() * 5) + 1)
-                    .setStato(Stato.DA_LEGGERE) // Per test, aggiungi a una categoria specifica
-                    .build();
-            // Per ora, aggiungiamo il libro a una lista "fittizia" e poi ricarichiamo tutto
-            // Quando ci sarà LibreriaManager, questo aggiungerà al DB e triggererà l'Observer.
-            // Per il test visuale, aggiungiamo alla lista temporanea e ricarichiamo
-            mockAllLibri.add(newLibro); // Aggiunge alla lista globale mock
-            refreshLibriCategoriesMock(); // Ricostruisce tutte le categorie
-            System.out.println("Aggiunto libro mock: " + newLibro.getTitolo());
+            // Apre AggiungiLibroForm
+            AggiungiLibroForm addBookForm = new AggiungiLibroForm("Aggiungi un nuovo libro");
+            addBookForm.setModal(true); // Rendi la finestra modale (blocca la HomeForm finché non chiusa)
+            addBookForm.setVisible(true);
+
         });
 
+        //todo questi ancora vanno visti
         filtra.addActionListener(e -> JOptionPane.showMessageDialog(this, "Azione Filtra (TEST)"));
         ordina.addActionListener(e -> JOptionPane.showMessageDialog(this, "Azione Ordina (TEST)"));
     }
 
+    /*
     // Lista "mock" globale per simulare il database/LibreriaManager
     private List<Libro> mockAllLibri = new ArrayList<>();
 
@@ -271,6 +276,62 @@ public class HomeForm extends Form {
         mainContentPanel.revalidate();
         mainContentPanel.repaint();
     }
+
+     */
+
+    @Override
+    public void update() throws SQLException {
+        System.out.println("HomeForm: Notifica di cambiamento ricevuta. Aggiorno la visualizzazione dei libri.");
+        refreshLibriCategories(); // Richiama il metodo per aggiornare la GUI con i dati reali
+    }
+
+    // Metodo per ricaricare i libri dalla fonte reale (LibreriaManager)
+    private void refreshLibriCategories() throws SQLException {
+        mainContentPanel.removeAll(); // Rimuovi tutti i componenti esistenti
+
+        List<Libro> allLibri = gestoreLibreria.restituisciLibri(); // <-- Ottiene i dati reali dal Manager
+
+        if (allLibri.isEmpty()) {
+            mainContentPanel.add(new JLabel("Nessun libro presente nella libreria. Aggiungine uno!"));
+        } else {
+            Map<String, List<Libro>> libriPerGenere = allLibri.stream()
+                    .collect(Collectors.groupingBy(Libro::getGenere_appartenenza));
+
+            // Per ogni genere, crea un pannello categoria e aggiungi i libri
+            libriPerGenere.forEach((genere, libriDiQuestoGenere) -> {
+                JLabel categoryLabel = new JLabel("Genere: " + genere);
+                categoryLabel.setForeground(Common_constants.colore_bottoni);
+                categoryLabel.setFont(new Font("Arial", Font.BOLD, 20));
+                categoryLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                categoryLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0));
+                mainContentPanel.add(categoryLabel);
+
+                JPanel categoryRowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 0)); // FlowLayout per la riga
+                categoryRowPanel.setOpaque(false);
+
+                for (Libro libro : libriDiQuestoGenere) {
+                    categoryRowPanel.add(new PanelLibro(libro)); // Assicurati che PanelLibro sia aggiornato
+                }
+
+                JScrollPane rowScrollPane = new JScrollPane(categoryRowPanel);
+                rowScrollPane.setOpaque(false);
+                rowScrollPane.getViewport().setOpaque(false);
+                rowScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+                rowScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                rowScrollPane.setBorder(BorderFactory.createEmptyBorder());
+
+                int rowScrollHeight = PanelLibro.getAltezza() + 20; // Altezza del PanelLibro + un po' di spazio
+                rowScrollPane.setPreferredSize(new Dimension(getWidth() - 200, rowScrollHeight)); // Adatta la larghezza
+                rowScrollPane.setMaximumSize(new Dimension(Integer.MAX_VALUE, rowScrollHeight));
+
+                mainContentPanel.add(rowScrollPane);
+                mainContentPanel.add(Box.createRigidArea(new Dimension(0, 30)));
+            });
+        }
+        mainContentPanel.revalidate();
+        mainContentPanel.repaint();
+    }
+
 
     /**
      * Crea un pannello per una singola categoria di libri con un titolo

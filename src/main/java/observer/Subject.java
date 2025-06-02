@@ -2,6 +2,8 @@ package observer;
 
 //questa è l'interfaccia Subject alla quale si attengono gli oggetti osservati
 
+import java.sql.SQLException;
+
 public interface Subject {
 
     //i metodi sono quelli di attach e detach dell'obsercer, difatti mantiene un riferimento a questo
@@ -13,7 +15,7 @@ public interface Subject {
 
     void detach(Observer o);
 
-    void notifyObserver();
+    void notifyObserver() throws SQLException;
 
 
 }

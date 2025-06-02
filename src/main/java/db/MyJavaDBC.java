@@ -34,17 +34,22 @@ public class MyJavaDBC {
         return instance;
     }
 
-    public Connection getConnection(){
+    public Connection getConnection() throws SQLException {
+        if (connection == null || connection.isClosed()) {
+            System.err.println("Connessione al database persa o chiusa. Tentativo di ristabilire la connessione...");
 
-        try{
-            if(connection == null || connection.isClosed()){
-                System.out.println("connessione persa o chiusa");
+            try {
+                // Tentativo di riconnessione
+                connection = DriverManager.getConnection(Common_constants.DB_URL, Common_constants.DB_USERNAME, Common_constants.DB_PASSWORD);
+                System.out.println("Riconnessione al database riuscita.");
+            } catch (SQLException e) {
+                System.err.println("Fallimento nella riconnessione al database: " + e.getMessage());
+                throw e; // Rilancia l'eccezione originale o una nuova
             }
-        }catch (SQLException e){
-            e.printStackTrace();
         }
         return connection;
     }
+
 
     //chiudiamo la connessione
     public void closeConnection(){
