@@ -1,15 +1,15 @@
 package gui;
 
-//questo form servirà per l'aggiunta di un nuovo libro, richiederà quindi i vari campi, tenendo conto di campi obbligatori quali
-//il titolo, il codice e l'autore
-//gli altri potranno essere anche tralasciati
-//per fare quello che ho detto nelle righe precedenti, mi avvalgo dell'utilizzo di un mediator
+
+
 
 import builder.Libro;
+import builder.Libro;
 import builder.Stato;
-import constants.Common_constants; // Assicurati di avere le tue costanti di colore
+import constants.Common_constants;
 import mediator.AggiungiLibroFormMediator;
-import service.GestoreLibreria; // Importa il gestore per l'aggiunta del libro
+import service.GestoreLibreria;
+
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -17,8 +17,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
-import java.util.Objects; // Per Objects.requireNonNull
-
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.Objects;
 
 
 public class AggiungiLibroForm extends JDialog {
@@ -31,60 +32,58 @@ public class AggiungiLibroForm extends JDialog {
     private JComboBox<Stato> statoComboBox;
     private JButton saveButton;
 
-    private GestoreLibreria gestoreLibreria; // Riferimento al GestoreLibreria
-    private AggiungiLibroFormMediator mediator; // Riferimento al Mediator
+    private GestoreLibreria gestoreLibreria;
+    private AggiungiLibroFormMediator mediator;
+    private Libro libroToModify;
 
-    // Costruttore per la modalità "Aggiungi" (senza libro preesistente)
-    public AggiungiLibroForm(String titolo) {
-        super((JFrame) null, titolo, true); // Parent frame a null, modale true
-        this.gestoreLibreria = GestoreLibreria.getInstance(); // Ottieni l'istanza del GestoreLibreria
-
-        // Inizializza il Mediator prima di inizializzare i componenti GUI
-        this.mediator = new AggiungiLibroFormMediator();
-
-        initComponents(); // Inizializza i componenti della GUI
-        setupMediator(); // Collega i componenti al Mediator
-        setupListeners(); // Aggiungi i listener per i pulsanti
-
-        // Configurazione della finestra
-        setSize(400, 500); // Dimensioni della finestra (puoi aggiustare)
-        setResizable(false);
-        setLocationRelativeTo(null); // Centra la finestra
-        getContentPane().setBackground(Common_constants.colore_primario);
-
-        //stato iniziale del bottone disattivato
-        mediator.widgetCambiato(titoloField);
-
-    }
-
-    // Costruttore per la modalità "Modifica" (con un libro preesistente)
+   // public AggiungiLibroForm(String titolo) {
+   //     this(titolo, null);
+   // }
 
     public AggiungiLibroForm(String titolo, Libro libroDaModificare) {
-        this(titolo); // Chiama il costruttore "aggiungi" per l'inizializzazione base
-        // Pre-popola i campi con i dati del libro da modificare
-        populateFields(libroDaModificare);
-        // Cambia il testo del pulsante in "Modifica" o "Salva Modifiche"
-        saveButton.setText("Aggiungi");
-        saveButton.setEnabled(false);
+        super((JFrame) null, titolo, true);
+        this.gestoreLibreria = GestoreLibreria.getInstance();
+        this.mediator = new AggiungiLibroFormMediator();
+        this.libroToModify = libroDaModificare; // Assegna qui il libro da modificare
 
+        if (this.libroToModify != null) {
+            System.out.println("AggiungiLibroForm: Aperto in modalità MODIFICA per libro: " + this.libroToModify.getTitolo() + " (ISBN: '" + this.libroToModify.getCodice_ISBN() + "')");
+        } else {
+            System.out.println("AggiungiLibroForm: Aperto in modalità AGGIUNGI NUOVO LIBRO.");
+        }
+
+        initComponents();
+        setupMediator();
+        setupListeners();
+
+        setSize(400, 500);
+        setResizable(false);
+        setLocationRelativeTo(null);
+        getContentPane().setBackground(Common_constants.colore_primario);
+
+        // DEBUG: Stampa lo stato di libroToModify all'apertura del form
+        if (this.libroToModify != null) {
+            System.out.println("AggiungiLibroForm: Aperto in modalità MODIFICA per libro: " + this.libroToModify.getTitolo() + " (ISBN: '" + this.libroToModify.getCodice_ISBN() + "')");
+        } else {
+            System.out.println("AggiungiLibroForm: Aperto in modalità AGGIUNGI NUOVO LIBRO.");
+        }
+
+        mediator.widgetCambiato(null); // Inizializza lo stato del bottone
     }
 
     private void initComponents() {
-        setLayout(new GridBagLayout()); // Usa GridBagLayout per un layout più flessibile
+        setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10); // Margini interni
+        gbc.insets = new Insets(10, 10, 10, 10);
 
-        // Impostazioni comuni per le etichette (Label)
         Font labelFont = new Font("Arial", Font.BOLD, 16);
-        Color labelColor = Common_constants.colore_font_titoli; // O un altro colore che indichi "obbligatorio" per Titolo, Autore, ISBN
+        Color labelColor = Common_constants.colore_font_titoli;
 
-        // Impostazioni comuni per i campi di testo (TextField)
         Dimension fieldSize = new Dimension(200, 30);
         Font fieldFont = new Font("Arial", Font.PLAIN, 14);
         Color fieldBackground = Common_constants.colore_bottoni;
         Color fieldForeground = Common_constants.colore_font_titoli;
 
-        // Titolo
         gbc.gridx = 0; gbc.gridy = 0; gbc.anchor = GridBagConstraints.WEST;
         JLabel titoloLabel = new JLabel("Titolo");
         titoloLabel.setForeground(labelColor);
@@ -99,7 +98,6 @@ public class AggiungiLibroForm extends JDialog {
         titoloField.setForeground(fieldForeground);
         add(titoloField, gbc);
 
-        // Autore
         gbc.gridx = 0; gbc.gridy = 1; gbc.anchor = GridBagConstraints.WEST;
         JLabel autoreLabel = new JLabel("Autore");
         autoreLabel.setForeground(labelColor);
@@ -114,7 +112,6 @@ public class AggiungiLibroForm extends JDialog {
         autoreField.setForeground(fieldForeground);
         add(autoreField, gbc);
 
-        // Codice ISBN
         gbc.gridx = 0; gbc.gridy = 2; gbc.anchor = GridBagConstraints.WEST;
         JLabel isbnLabel = new JLabel("Codice ISBN");
         isbnLabel.setForeground(labelColor);
@@ -129,10 +126,9 @@ public class AggiungiLibroForm extends JDialog {
         isbnField.setForeground(fieldForeground);
         add(isbnField, gbc);
 
-        // Genere
         gbc.gridx = 0; gbc.gridy = 3; gbc.anchor = GridBagConstraints.WEST;
         JLabel genereLabel = new JLabel("Genere");
-        genereLabel.setForeground(Common_constants.colore_font_titoli); // Meno enfatico se non obbligatorio
+        genereLabel.setForeground(Common_constants.colore_font_titoli);
         genereLabel.setFont(labelFont);
         add(genereLabel, gbc);
 
@@ -144,7 +140,6 @@ public class AggiungiLibroForm extends JDialog {
         genereField.setForeground(fieldForeground);
         add(genereField, gbc);
 
-        // Valutazione
         gbc.gridx = 0; gbc.gridy = 4; gbc.anchor = GridBagConstraints.WEST;
         JLabel valutazioneLabel = new JLabel("Valutazione");
         valutazioneLabel.setForeground(Common_constants.colore_font_titoli);
@@ -152,7 +147,7 @@ public class AggiungiLibroForm extends JDialog {
         add(valutazioneLabel, gbc);
 
         gbc.gridx = 1; gbc.gridy = 4; gbc.fill = GridBagConstraints.HORIZONTAL;
-        Integer[] ratings = {0, 1, 2, 3, 4, 5}; // 0 per "non valutato" o "scegli"
+        Integer[] ratings = {0, 1, 2, 3, 4, 5};
         valutazioneComboBox = new JComboBox<>(ratings);
         valutazioneComboBox.setPreferredSize(fieldSize);
         valutazioneComboBox.setFont(fieldFont);
@@ -160,7 +155,6 @@ public class AggiungiLibroForm extends JDialog {
         valutazioneComboBox.setForeground(fieldForeground);
         add(valutazioneComboBox, gbc);
 
-        // Stato
         gbc.gridx = 0; gbc.gridy = 5; gbc.anchor = GridBagConstraints.WEST;
         JLabel statoLabel = new JLabel("Stato");
         statoLabel.setForeground(Common_constants.colore_font_titoli);
@@ -168,30 +162,36 @@ public class AggiungiLibroForm extends JDialog {
         add(statoLabel, gbc);
 
         gbc.gridx = 1; gbc.gridy = 5; gbc.fill = GridBagConstraints.HORIZONTAL;
-        statoComboBox = new JComboBox<>(Stato.values()); // Popola con i valori dell'enum Stato
+        statoComboBox = new JComboBox<>(Stato.values());
         statoComboBox.setPreferredSize(fieldSize);
         statoComboBox.setFont(fieldFont);
         statoComboBox.setBackground(fieldBackground);
         statoComboBox.setForeground(fieldForeground);
         add(statoComboBox, gbc);
 
-        // Pulsante Save
-        gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 2; // Occupa 2 colonne
-        gbc.fill = GridBagConstraints.NONE; // Non si espande
+        gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.CENTER;
-        gbc.insets = new Insets(30, 10, 10, 10); // Margini più ampi per il bottone
-        saveButton = new JButton("Save");
+        gbc.insets = new Insets(30, 10, 10, 10);
+        saveButton = new JButton("Salva");
         saveButton.setPreferredSize(new Dimension(150, 45));
         saveButton.setBackground(Common_constants.colore_secondario);
         saveButton.setForeground(Common_constants.colore_font_titoli);
         saveButton.setFont(new Font("Arial", Font.BOLD, 18));
         saveButton.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         saveButton.setFocusPainted(false);
-        saveButton.setEnabled(false); // Inizialmente disabilitato per il Mediator
+        saveButton.setEnabled(false);
         add(saveButton, gbc);
+
+        // Pre-popola i campi se stiamo modificando un libro
+        if (this.libroToModify != null) {
+            populateFields(this.libroToModify);
+            saveButton.setText("Salva Modifiche");
+            isbnField.setEditable(false); // L'ISBN non è modificabile in modalità modifica
+            isbnField.setBackground(Common_constants.colore_primario); // Un colore per indicare che non è modificabile
+        }
     }
 
-    // Metodo per collegare i componenti al Mediator
     private void setupMediator() {
         mediator.setTitoloField(titoloField);
         mediator.setAutoreField(autoreField);
@@ -200,50 +200,50 @@ public class AggiungiLibroForm extends JDialog {
     }
 
     private void setupListeners() {
-        // Aggiungi DocumentListener a tutti i campi di testo obbligatori
         DocumentListener documentListener = new DocumentListener() {
-
             @Override
-            public void changedUpdate(DocumentEvent e) {
-                //non usato
-            }
-
+            public void changedUpdate(DocumentEvent e) { updateMediator(); }
             @Override
-            public void insertUpdate(DocumentEvent e) {
-                mediator.widgetCambiato((JComponent) e.getDocument().getProperty("owner"));
-            }
-
+            public void insertUpdate(DocumentEvent e) { updateMediator(); }
             @Override
-            public void removeUpdate(DocumentEvent e) {
-                mediator.widgetCambiato((JComponent) e.getDocument().getProperty("owner"));
+            public void removeUpdate(DocumentEvent e) { updateMediator(); }
+
+            private void updateMediator() {
+                mediator.widgetCambiato(null);
             }
-
-
         };
 
-        titoloField.getDocument().putProperty("owner", titoloField); // Associa il componente al documento
         titoloField.getDocument().addDocumentListener(documentListener);
-
-        autoreField.getDocument().putProperty("owner", autoreField);
         autoreField.getDocument().addDocumentListener(documentListener);
-
-        isbnField.getDocument().putProperty("owner", isbnField);
         isbnField.getDocument().addDocumentListener(documentListener);
 
-        // Listener per il pulsante Save
         saveButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Preleva i dati dai campi
-                String titolo = titoloField.getText().trim();
-                String autore = autoreField.getText().trim();
-                String isbn = isbnField.getText().trim();
-                String genere = genereField.getText().trim();
-                int valutazione = (Integer) valutazioneComboBox.getSelectedItem();
-                Stato stato = (Stato) statoComboBox.getSelectedItem();
+                handleSaveAction();
+            }
+        });
+    }
 
-                // Crea l'oggetto Libro usando il Builder Pattern
-                Libro libro = new Libro.Builder()
+    private void handleSaveAction() {
+        String titolo = titoloField.getText().trim();
+        String autore = autoreField.getText().trim();
+        String isbn = isbnField.getText().trim(); // Ottieni l'ISBN dal campo
+        String genere = genereField.getText().trim();
+        int valutazione = (Integer) valutazioneComboBox.getSelectedItem();
+        Stato stato = (Stato) statoComboBox.getSelectedItem();
+
+        if (titolo.isEmpty() || autore.isEmpty() || isbn.isEmpty()) {
+            JOptionPane.showMessageDialog(AggiungiLibroForm.this,
+                    "Titolo, Autore e Codice ISBN sono campi obbligatori.",
+                    "Campi Mancanti", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            if (libroToModify == null) {
+                // Modalità Aggiungi Nuovo Libro
+                Libro nuovoLibro = new Libro.Builder()
                         .setTitolo(titolo)
                         .setAutore(autore)
                         .setCodiceISBN(isbn)
@@ -252,46 +252,81 @@ public class AggiungiLibroForm extends JDialog {
                         .setStato(stato)
                         .build();
 
-                try {
-                    // Qui dovrai implementare la logica per distinguere tra aggiunta e modifica.
-                    // Ad esempio, se la form è stata aperta con un libro esistente (modalità modifica),
-                    // dovresti chiamare un metodo di modifica nel GestoreLibreria.
-                    // Per ora, assumiamo sia sempre un'aggiunta come nel tuo esempio iniziale.
-                    gestoreLibreria.aggiungiLibro(libro);
+                System.out.println("AggiungiLibroForm: Tentativo di AGGIUNGERE libro con ISBN: '" + nuovoLibro.getCodice_ISBN() + "'");
+                gestoreLibreria.aggiungiLibro(nuovoLibro);
+                JOptionPane.showMessageDialog(AggiungiLibroForm.this,
+                        "Libro aggiunto con successo!", "Successo", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                // Modalità Modifica Libro Esistente
+                // Aggiorna le proprietà dell'oggetto 'libroToModify' esistente
+                libroToModify.setTitolo(titolo);
+                libroToModify.setAutore(autore);
+                // L'ISBN di libroToModify è già quello originale, non lo modifichiamo qui.
+                libroToModify.setGenere_appartenenza(genere.isEmpty() ? null : genere);
+                libroToModify.setValutazione(valutazione);
+                libroToModify.setStato(stato);
 
-                    JOptionPane.showMessageDialog(AggiungiLibroForm.this,
-                            "Libro salvato con successo!", "Successo", JOptionPane.INFORMATION_MESSAGE);
-                    dispose();
-                } catch (SQLException ex) {
-                    JOptionPane.showMessageDialog(AggiungiLibroForm.this,
-                            "Errore durante il salvataggio del libro: " + ex.getMessage(),
-                            "Errore", JOptionPane.ERROR_MESSAGE);
-                    ex.printStackTrace();
-                } catch (IllegalArgumentException ex) {
-                    JOptionPane.showMessageDialog(AggiungiLibroForm.this,
-                            ex.getMessage(),
-                            "Errore di Validazione", JOptionPane.WARNING_MESSAGE);
-                }
+                System.out.println("AggiungiLibroForm: Tentativo di MODIFICARE libro con ISBN originale: '" + libroToModify.getCodice_ISBN() + "'");
+                gestoreLibreria.aggiornaLibro(libroToModify);
+                JOptionPane.showMessageDialog(AggiungiLibroForm.this,
+                        "Libro aggiornato con successo!", "Successo", JOptionPane.INFORMATION_MESSAGE);
             }
-        });
+            dispose();
+        } catch (SQLException ex) {
+            System.err.println("ERRORE SQL in AggiungiLibroForm: " + ex.getMessage());
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(AggiungiLibroForm.this,
+                    "Errore durante l'operazione sul database: " + ex.getMessage() + "\nControlla la console per i dettagli.",
+                    "Errore Database", JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalArgumentException ex) {
+            System.err.println("ERRORE DI VALIDAZIONE/COSTRUZIONE LIBRO in AggiungiLibroForm: " + ex.getMessage());
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(AggiungiLibroForm.this,
+                    "Errore nei dati del libro: " + ex.getMessage(),
+                    "Errore Dati", JOptionPane.WARNING_MESSAGE);
+        } catch (Exception ex) {
+            System.err.println("ERRORE INATTESO in AggiungiLibroForm: " + ex.getClass().getName() + " - " + ex.getMessage());
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(AggiungiLibroForm.this,
+                    "Si è verificato un errore inatteso: " + ex.getMessage() + "\nControlla la console per i dettagli.",
+                    "Errore Grave", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void populateFields(Libro libro) {
-        Objects.requireNonNull(libro, "Il libro da modificare non può essere null.");
         titoloField.setText(libro.getTitolo());
         autoreField.setText(libro.getAutore());
         isbnField.setText(libro.getCodice_ISBN());
-        genereField.setText(libro.getGenere_appartenenza() == null ? "" : libro.getGenere_appartenenza()); // Gestisci null
+        genereField.setText(libro.getGenere_appartenenza() == null ? "" : libro.getGenere_appartenenza());
         valutazioneComboBox.setSelectedItem(libro.getValutazione());
         statoComboBox.setSelectedItem(libro.getStato());
-        isbnField.setEditable(false); // L'ISBN non è modificabile
+        // L'ISBN è già impostato come non modificabile nel initComponents
+    }
+
+    // Metodo di debug temporaneo per AggiungiLibroForm
+    public Libro getLibroToModifyDebug() {
+        return libroToModify;
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            AggiungiLibroForm form = new AggiungiLibroForm("Aggiungi il tuo libro");
-            form.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-            form.setVisible(true);
+            // Esempio per l'aggiunta di un nuovo libro
+            // AggiungiLibroForm formAggiungi = new AggiungiLibroForm("Aggiungi un nuovo libro");
+            // formAggiungi.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+            // formAggiungi.setVisible(true);
+
+            // Esempio per la modifica di un libro (scommenta per testare)
+            Libro libroEsempio = new Libro.Builder()
+                    .setTitolo("Il Signore degli Anelli")
+                    .setAutore("J.R.R. Tolkien")
+                    .setCodiceISBN("978-8845292613") // Assicurati che questo ISBN esista nel tuo DB per il test
+                    .setGenereAppartenenza("Fantasy")
+                    .setValutazione(5)
+                    .setStato(Stato.LETTO)
+                    .build();
+            AggiungiLibroForm formModifica = new AggiungiLibroForm("Modifica Libro", libroEsempio);
+            formModifica.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+            formModifica.setVisible(true);
         });
     }
 }

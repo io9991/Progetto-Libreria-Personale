@@ -5,20 +5,13 @@ import builder.Libro;
 import java.sql.SQLException;
 import java.util.List;
 
+
+
 public interface LibroRepository {
 
-    //metto i metodi che mi servono per le operazioni
-    //che vengono fatte sul dataBase
-
-    //metodo per aggiungere
-    void inserisciLibro(Libro libro) throws SQLException;
-    //metodo per eliminare
-    void eliminaLibro(Libro libro) throws SQLException;
-    //metodo per modificare
-    void modificaLibro(Libro libro) throws SQLException;
-    //metodo per ottenere un libro dal suo isbn
-    Libro LibroConIsbn(String isbn) throws SQLException;
-    //nmetodo che restituisce tutti i libri
-    List<Libro> tuttiLibri();
-
+    void inserisciLibro(Libro libro) throws SQLException; // Mantengo inserisciLibro
+    void eliminaLibro(Libro libro) throws SQLException; // Mantengo eliminaLibro (anche se un ISBN sarebbe più pulito)
+    void modificaLibro(Libro libro) throws SQLException; // Mantengo modificaLibro
+    Libro LibroConIsbn(String isbn) throws SQLException; // Mantengo LibroConIsbn
+    List<Libro> tuttiLibri() throws SQLException; // Mantengo tuttiLibri e aggiungo throws SQLException
 }

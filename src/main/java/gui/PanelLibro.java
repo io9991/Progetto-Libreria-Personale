@@ -6,12 +6,16 @@ package gui;
 import constants.Common_constants;
 import builder.Libro; // Assicurati che Libro sia importato correttamente
 import builder.Stato; // Assicurati che Stato sia importato correttamente
+import service.GestoreLibreria;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.SQLException;
 import java.util.Objects;
+
+
 
 public class PanelLibro extends JPanel {
 
@@ -31,7 +35,7 @@ public class PanelLibro extends JPanel {
     }
 
     public PanelLibro(Libro libro) {
-       // this.libro = Objects.requireNonNull(libro, "L'oggetto Libro non può essere null.");
+        this.libro = Objects.requireNonNull(libro, "L'oggetto Libro non può essere null.");
 
         setLayout(new BorderLayout(5, 5));
         setPreferredSize(new Dimension(larghezza, altezza));
@@ -41,13 +45,23 @@ public class PanelLibro extends JPanel {
         setBackground(Common_constants.colore_secondario);
 
         // MouseListener per rendere l'intero pannello cliccabile
+        //se clicco il libro mi apre un jdialog che mi permette la
+        //modifica
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                JOptionPane.showMessageDialog(PanelLibro.this,
-                        "Hai cliccato sul libro: " + libro.getTitolo() + "\nISBN: " + libro.getCodice_ISBN(),
-                        "Dettagli Libro (TEST)",
-                        JOptionPane.INFORMATION_MESSAGE);
+                AggiungiLibroForm modificaForm = new AggiungiLibroForm("Modifica il tuo libro", libro);
+                System.out.println("DEBUG: PanelLibro - Cliccato per modificare. Libro passato: " +
+                        (PanelLibro.this.libro != null ?
+                                PanelLibro.this.libro.getTitolo() + " (ISBN: " + PanelLibro.this.libro.getCodice_ISBN() + ")" :
+                                "NULL (Problema qui!)"));
+
+                modificaForm.setVisible(true);
+             //   modificaForm.setModal(true);
+              //  JOptionPane.showMessageDialog(PanelLibro.this,
+              //          "Hai cliccato sul libro: " + libro.getTitolo() + "\nISBN: " + libro.getCodice_ISBN(),
+              //          "Dettagli Libro (TEST)",
+              //          JOptionPane.INFORMATION_MESSAGE);
             }
 
             @Override
@@ -98,12 +112,7 @@ public class PanelLibro extends JPanel {
         bottomPanel.setOpaque(false);
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 5, 5));
 
-        /*
-        JLabel statoLabel = new JLabel("Stato: " + formatStato(libro.getStato()));
-        statoLabel.setForeground(Common_constants.colore_font_dettagli);
-        statoLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        bottomPanel.add(statoLabel, BorderLayout.WEST);
-         */
+
 
         JPanel ratingAndDeletePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
         ratingAndDeletePanel.setOpaque(false);
@@ -128,12 +137,26 @@ public class PanelLibro extends JPanel {
 
         deleteButton.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this,
-                    "TEST: Vuoi eliminare il libro: " + libro.getTitolo() + " (ISBN: " + libro.getCodice_ISBN() + ")?",
-                    "Conferma Eliminazione (TEST)",
+                    "Vuoi eliminare il libro: " + libro.getTitolo() + " (ISBN: " + libro.getCodice_ISBN() + ")?",
+                    "Conferma Eliminazione",
                     JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
-                System.out.println("TEST: Eliminazione confermata per libro: " + libro.getTitolo());
-                // QUI ANDRA' LA LOGICA PER ELIMINARE IL LIBRO DAL DB E AGGIORNARE LA GUI (Observer)
+                System.out.println("Eliminazione confermata per libro: " + libro.getTitolo());
+                //logica cancellazione seguendo l'observer
+                try {
+                    //richiamiamo la funzione che permette l'eleminazione del libro
+                    GestoreLibreria.getInstance().rimuoviLibro(libro);
+                    JOptionPane.showMessageDialog(this, "Libro eliminato!");
+                    //il gestore libreria notifica l'homeform della modifica avvenuta
+                }catch(SQLException sqe){
+                    System.out.println("Errore nell'eliminazione");
+                    sqe.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Errore nell'eliminazione!");
+
+                }
+            }else{
+                System.out.println("Eliminazione annullata");
+                JOptionPane.showMessageDialog(this, "Hai scelto di non eliminare il libro");
             }
         });
         ratingAndDeletePanel.add(deleteButton);

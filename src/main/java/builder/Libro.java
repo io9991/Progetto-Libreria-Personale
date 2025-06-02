@@ -33,6 +33,37 @@ public class Libro {
         return valutazione;
     }
 
+    public void setTitolo(String titolo) {
+        this.titolo = titolo;
+    }
+
+    public void setAutore(String autore) {
+        this.autore = autore;
+    }
+
+    // Generalmente l'ISBN non si modifica, ma se la tua logica lo richiede, puoi includerlo.
+    // Però, essendo una chiave primaria, la sua modifica richiede attenzione nel DB.
+    // Per ora, lo lascio immutabile come pratica comune.
+    // public void setCodice_ISBN(String codice_ISBN) {
+    //     this.codice_ISBN = codice_ISBN;
+    // }
+
+    public void setGenere_appartenenza(String genere_appartenenza) {
+        this.genere_appartenenza = genere_appartenenza;
+    }
+
+    public void setValutazione(int valutazione) {
+        if (valutazione >= 0 && valutazione <= 5) { // Aggiungi validazione
+            this.valutazione = valutazione;
+        } else {
+            throw new IllegalArgumentException("La valutazione deve essere tra 0 e 5.");
+        }
+    }
+
+    public void setStato(Stato stato) {
+        this.stato = stato;
+    }
+
     //creo il builder
     public static class Builder{
 

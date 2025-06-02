@@ -11,17 +11,12 @@ import repository.LibroRepositoryImpl;
 import java.sql.SQLException;
 import java.util.*;
 
-//qui viene inserito il concreteSubject che quindi va a realizzare l'interfaccia subject
+
 public class GestoreLibreria implements Subject{
 
-    //piccola deviazione rispetto al diagramma di classe generale
-
-    //miaIstanza
     private static GestoreLibreria instance;
-    //lista di osservatori
     private List<Observer> osservatori;
-    //riferimento alla connessione
-    private LibroRepository libroRepository; //fa riferimento al libro repository
+    private LibroRepository libroRepository;
 
     private GestoreLibreria(){
         osservatori = new ArrayList<>();
@@ -35,10 +30,8 @@ public class GestoreLibreria implements Subject{
         return instance;
     }
 
-
     @Override
     public void attach(Observer o) {
-        //se non contiene l'osservatore lo aggiungiamo
         if(!osservatori.contains(o)){
             osservatori.add(o);
         }
@@ -46,7 +39,6 @@ public class GestoreLibreria implements Subject{
 
     @Override
     public void detach(Observer o) {
-        //rimozione dell'osservatore
         if(osservatori.contains(o)){
             osservatori.remove(o);
         }
@@ -54,45 +46,31 @@ public class GestoreLibreria implements Subject{
 
     @Override
     public void notifyObserver() throws SQLException {
-        //creo una copia per evitare ConcurrentModificationException
         List<Observer> osservatoriCopia = new ArrayList<>(this.osservatori);
         for (Observer o : osservatoriCopia){
-            //a tutti gli osservatori andiamo a fare l'update
             o.update();
         }
     }
 
-
     public void aggiungiLibro(Libro libro) throws SQLException{
-        try {
-            libroRepository.inserisciLibro(libro);
-            notifyObserver();
-        }catch (Exception e){
-            e.printStackTrace();
-        }
+        // Rimuovo il try-catch per propagare l'errore alla GUI
+        libroRepository.inserisciLibro(libro); // Mantengo il nome del metodo
+        notifyObserver(); // Notifica solo se l'inserimento è riuscito
     }
 
-
     public void rimuoviLibro(Libro libro) throws SQLException {
-        libroRepository.eliminaLibro(libro);
+        libroRepository.eliminaLibro(libro); // Mantengo il nome del metodo
         notifyObserver();
     }
 
     public List<Libro> restituisciLibri() throws SQLException{
-        return libroRepository.tuttiLibri();
+        return libroRepository.tuttiLibri(); // Mantengo il nome del metodo
     }
 
     public void aggiornaLibro(Libro libro) throws SQLException{
-        try {
-            libroRepository.modificaLibro(libro);
-            notifyObserver();
-        }catch(Exception e){
-            e.printStackTrace();
-        }
+        // Rimuovo il try-catch per propagare l'errore alla GUI
+        libroRepository.modificaLibro(libro); // Mantengo il nome del metodo
+        notifyObserver();
     }
 
-
-
 }
-
-
