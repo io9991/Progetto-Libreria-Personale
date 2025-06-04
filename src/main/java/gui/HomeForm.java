@@ -4,6 +4,8 @@ package gui;
 import java.awt.*;
 import constants.*;
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,10 @@ public class HomeForm extends Form implements Observer {
 
     private JPanel mainContentPanel;
     private GestoreLibreria gestoreLibreria;
+    private String currentSearchTerm = "";  //campo per tenere traccia del termine di ricerca corrente
+    private String currentFilterType = ""; // Tiene traccia del tipo di filtro attivo (es. "AUTORE")
+    private String currentFilterValue = ""; // Tiene traccia del valore del filtro attivo (es. "Dante Alighieri")
+
 
     public HomeForm(String titolo) throws SQLException {
         super(titolo);
@@ -54,17 +60,43 @@ public class HomeForm extends Form implements Observer {
         ricerca.setFont(new Font("Dialog", Font.BOLD, 15));
         ricerca.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
 
+        ricerca.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                performSearch(ricerca.getText());
+            }
+        });
+
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         searchPanel.setOpaque(false);
         searchPanel.add(ricerca);
-        JButton searchButton = new JButton("🔍");
-        searchButton.setPreferredSize(new Dimension(40, 35));
-        searchButton.setBackground(Common_constants.colore_bottoni);
-        searchButton.setForeground(Common_constants.colore_font_titoli);
-        searchButton.setFont(new Font("Dialog", Font.BOLD, 18));
-        searchButton.setBorder(BorderFactory.createLineBorder(Common_constants.colore_secondario, 1));
-        searchButton.setFocusPainted(false);
-        searchPanel.add(searchButton);
+//        JButton searchButton = new JButton("🔍");
+//        searchButton.setPreferredSize(new Dimension(40, 35));
+//        searchButton.setBackground(Common_constants.colore_bottoni);
+//        searchButton.setForeground(Common_constants.colore_font_titoli);
+//        searchButton.setFont(new Font("Dialog", Font.BOLD, 18));
+//        searchButton.setBorder(BorderFactory.createLineBorder(Common_constants.colore_secondario, 1));
+//        searchButton.setFocusPainted(false);
+//        searchPanel.add(searchButton);
+        //bottone per tornare alla 'home'
+        JButton homeButton = new JButton("⌂");
+        homeButton.setPreferredSize(new Dimension(40, 35));
+        homeButton.setBackground(Common_constants.colore_bottoni);
+        homeButton.setForeground(Common_constants.colore_font_titoli);
+        homeButton.setFont(new Font("Dialog", Font.BOLD, 18));
+        //metto il cursore del bottone
+        homeButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        homeButton.setBorder(BorderFactory.createLineBorder(Common_constants.colore_secondario, 1));
+        homeButton.setFocusPainted(false);
+        searchPanel.add(homeButton);
+
+        homeButton.addActionListener(e -> {
+            try {
+                refreshLibriCategories();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
 
         superiore.add(searchPanel, BorderLayout.EAST);
         getContentPane().add(superiore, BorderLayout.NORTH);
@@ -117,9 +149,125 @@ public class HomeForm extends Form implements Observer {
             addBookForm.setVisible(true);
         });
 
-        // Listener per i pulsanti "Filtra" e "Ordina" (ancora da implementare)
-        filtra.addActionListener(e -> JOptionPane.showMessageDialog(this, "Azione Filtra (TEST)"));
+        //per implementare filtro e ordine utilizzo dei menu a tendina
+        //filtra.addActionListener(e -> JOptionPane.showMessageDialog(this, "Azione Filtra (TEST)"));
         ordina.addActionListener(e -> JOptionPane.showMessageDialog(this, "Azione Ordina (TEST)"));
+        filtra.addActionListener(e -> mostraPopupMenu(filtra));
+
+
+    }
+
+    //mostra Popup menu
+    private void mostraPopupMenu(Component invoker){
+        JPopupMenu filterMenu = new JPopupMenu("Filtra per...");
+
+        // Opzione per rimuovere tutti i filtri
+        JMenuItem clearFilterItem = new JMenuItem("Mostra Tutti i Libri (Reset Filtro)");
+        clearFilterItem.addActionListener(e -> {
+            try {
+                currentFilterType = "";
+                currentFilterValue = "";
+                refreshLibriCategories(); // Torna a mostrare tutti i libri
+            } catch (SQLException ex) {
+               // handleGuiError("Errore durante il reset del filtro", ex);
+                ex.printStackTrace();
+            }
+        });
+        filterMenu.add(clearFilterItem);
+        filterMenu.addSeparator(); // Linea di separazione
+
+        // Sottomenu per Autore
+        JMenu authorMenu = new JMenu("Autore");
+        try {
+            List<String> autori = gestoreLibreria.getAutoriDisponibili();
+            if (autori.isEmpty()) {
+                authorMenu.add(new JMenuItem("Nessun autore disponibile"));
+                authorMenu.getItem(0).setEnabled(false); // Disabilita l'item
+            } else {
+                for (String autore : autori) {
+                    JMenuItem item = new JMenuItem(autore);
+                    item.addActionListener(e -> applyFilter("AUTORE", autore));
+                    authorMenu.add(item);
+                }
+            }
+        } catch (SQLException e) {
+           // handleGuiError("Errore nel caricamento degli autori", e);
+            e.printStackTrace();
+            authorMenu.add(new JMenuItem("Errore caricamento autori"));
+            authorMenu.getItem(0).setEnabled(false);
+        }
+        filterMenu.add(authorMenu);
+
+        // Sottomenu per Genere
+        JMenu genreMenu = new JMenu("Genere");
+        try {
+            List<String> generi = gestoreLibreria.getGeneriDisponibili();
+            if (generi.isEmpty()) {
+                genreMenu.add(new JMenuItem("Nessun genere disponibile"));
+                genreMenu.getItem(0).setEnabled(false);
+            } else {
+                for (String genere : generi) {
+                    JMenuItem item = new JMenuItem(genere);
+                    item.addActionListener(e -> applyFilter("GENERE", genere));
+                    genreMenu.add(item);
+                }
+            }
+        } catch (SQLException e) {
+           // handleGuiError("Errore nel caricamento dei generi", e);
+            e.printStackTrace();
+            genreMenu.add(new JMenuItem("Errore caricamento generi"));
+            genreMenu.getItem(0).setEnabled(false);
+        }
+        filterMenu.add(genreMenu);
+
+        // Sottomenu per Valutazione
+        JMenu ratingMenu = new JMenu("Valutazione");
+        for (int i = 5; i >= 1; i--) { // Da 5 stelle a 1 stella
+            JMenuItem item = new JMenuItem(i + " Stella" + (i == 1 ? "" : "e"));
+            int rating = i; // Per usarla nell'espressione lambda
+            item.addActionListener(e -> applyFilter("VALUTAZIONE", String.valueOf(rating)));
+            ratingMenu.add(item);
+        }
+        filterMenu.add(ratingMenu);
+
+        // Mostra il popup menu nella posizione del bottone "Filtra"
+        filterMenu.show(invoker, 0, invoker.getHeight());
+    }
+
+    private void applyFilter(String type, String value) {
+        this.currentFilterType = type;
+        this.currentFilterValue = value;
+        this.currentSearchTerm = ""; // Resetta la ricerca quando applichi un filtro
+
+
+        try {
+            List<Libro> filteredLibri = gestoreLibreria.getLibriFiltrati(type, value);
+            String title = "Filtro: " + type + " = " + value;
+            displaySearchResults(filteredLibri, title); // Riutilizziamo displaySearchResults
+        } catch (SQLException e) {
+            //handleGuiError("Errore durante l'applicazione del filtro", e);
+            e.printStackTrace();
+        }
+    }
+
+    //metodo per la ricerca
+    private void performSearch(String searchTerm){
+        this.currentSearchTerm = searchTerm.trim(); // Salva il termine di ricerca corrente
+        try {
+            // Se il campo di ricerca è vuoto, mostra tutti i libri
+            if (currentSearchTerm.isEmpty()) {
+                refreshLibriCategories(); // Ricarica tutte le categorie
+            } else {
+                List<Libro> risultatiRicerca = gestoreLibreria.cercaLibri(currentSearchTerm);
+                displaySearchResults(risultatiRicerca, currentSearchTerm); // Mostra solo i risultati della ricerca
+            }
+        } catch (SQLException e) {
+            System.err.println("ERRORE GUI: Errore durante l'esecuzione della ricerca: " + e.getMessage());
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                    "Errore durante la ricerca dei libri: " + e.getMessage(),
+                    "Errore di Ricerca", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     @Override
@@ -206,6 +354,26 @@ public class HomeForm extends Form implements Observer {
         mainContentPanel.revalidate();
         mainContentPanel.repaint();
     }
+
+    //per visualizzare solo i libri che soddisfano la ricerca
+    private void displaySearchResults(List<Libro> risultati, String searchTerm) {
+        mainContentPanel.removeAll(); // Rimuovi tutti i componenti esistenti
+
+        if (risultati.isEmpty()) {
+            JLabel noResultsLabel = new JLabel("Nessun risultato trovato per: '" + searchTerm + "'");
+            noResultsLabel.setForeground(Common_constants.colore_font_titoli);
+            noResultsLabel.setFont(new Font("Arial", Font.ITALIC, 16));
+            noResultsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            mainContentPanel.add(Box.createVerticalGlue());
+            mainContentPanel.add(noResultsLabel);
+            mainContentPanel.add(Box.createVerticalGlue());
+        } else {
+            mainContentPanel.add(createCategoryPanel("Risultati per \"" + searchTerm + "\"", risultati), searchTerm);
+        }
+        mainContentPanel.revalidate();
+        mainContentPanel.repaint();
+    }
+
 
 
     // Metodo per creare un pannello di categoria con un titolo e una riga di libri scrollabile

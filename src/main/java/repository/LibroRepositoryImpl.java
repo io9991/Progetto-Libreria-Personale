@@ -172,4 +172,269 @@ public class LibroRepositoryImpl implements LibroRepository {
         System.out.println("DEBUG: LibroRepositoryImpl.tuttiLibri - Trovati " + libri.size() + " libri dal database.");
         return libri;
     }
+
+    //metodo per la ricerca
+    @Override
+    public List<Libro> cercaLibri(String query) throws SQLException{
+
+        List<Libro> libriTrovati = new ArrayList<>();
+        String cercaTerm = "%" + query.toLowerCase() + "%";
+
+        //query sql per la ricerca
+        String sql = "SELECT * FROM " + Common_constants.DB_LIBRI_TABLE_NAME +
+                " WHERE LOWER(titolo) LIKE ?" +
+                " OR LOWER(autore) LIKE ?" +
+                " OR LOWER(codISBN) LIKE ?" +
+                " OR LOWER(genere) LIKE ?";
+        //try catch
+        try(Connection connessione = getConnection();
+            PreparedStatement cercaStms = connessione.prepareStatement(sql)){
+
+            cercaStms.setString(1, cercaTerm);
+            cercaStms.setString(2, cercaTerm);
+            cercaStms.setString(3, cercaTerm);
+            cercaStms.setString(4, cercaTerm);
+
+            try(ResultSet rs = cercaStms.executeQuery()){
+                while (rs.next()){
+                    libriTrovati.add(creaLibroDaResultSet(rs));
+                }
+            }
+        }catch (SQLException e){
+            System.err.println("errore nella ricerca");
+            e.printStackTrace();
+            throw e;
+        }
+        return libriTrovati;
+    }
+
+    //funzione creaLibroDaResult
+    private Libro creaLibroDaResultSet(ResultSet rs) throws SQLException{
+        return new Libro.Builder()
+                .setTitolo(rs.getString("titolo"))
+                .setAutore(rs.getString("autore"))
+                .setCodiceISBN(rs.getString("codISBN"))
+                .setGenereAppartenenza(rs.getString("genere"))
+                .setValutazione(rs.getInt("valutazione"))
+                .setStato(Stato.valueOf(rs.getString("stat")))
+                .build();
+    }
+
+//    @Override
+//    public List<String> getAutoriDistinti() throws SQLException{
+//
+//        //prendo gli autori dal database
+//        List<String> autoriDistinti = new ArrayList<>();
+//        //scrivo la query
+//        String sql = "SELECT DISTINCT autore FROM " +
+//                Common_constants.DB_LIBRI_TABLE_NAME +
+//                " ORDERED BY autore ASC";
+//        try (Connection connessione = getConnection();
+//             Statement smt = connessione.createStatement();
+//             ResultSet rs = smt.executeQuery(sql)){
+//            while(rs.next()){
+//                autoriDistinti.add(rs.getString("autore"));
+//            }
+//
+//        }catch(SQLException e){
+//            System.out.println("ERRORE");
+//            e.printStackTrace();
+//            throw e;
+//        }
+//        return autoriDistinti;
+//    }
+//
+//
+//    @Override
+//    public List<String> getGeneriDistinti() throws SQLException{
+//
+//        //prendo gli autori dal database
+//        List<String> generiDistinti = new ArrayList<>();
+//        //scrivo la query
+//        String sql = "SELECT DISTINCT genere FROM " +
+//                Common_constants.DB_LIBRI_TABLE_NAME +
+//                " ORDERED BY genere ASC";
+//        try (Connection connessione = getConnection();
+//             Statement smt = connessione.createStatement();
+//             ResultSet rs = smt.executeQuery(sql)){
+//            while(rs.next()){
+//                generiDistinti.add(rs.getString("genere"));
+//            }
+//
+//        }catch(SQLException e){
+//            System.out.println("ERRORE");
+//            e.printStackTrace();
+//            throw e;
+//        }
+//        return generiDistinti;
+//    }
+//
+//    @Override
+//    public List<Libro> cercaLibriByAutore(String autore){
+//        List<Libro> libri = new ArrayList<>();
+//        String sql = "SELECT * FROM " + Common_constants.DB_LIBRI_TABLE_NAME + " WHERE LOWER(autore) LIKE ?";
+//        try (Connection connessione = getConnection();
+//             PreparedStatement pstmt = connessione.prepareStatement(sql)) {
+//            pstmt.setString(1, "%" + autore.toLowerCase() + "%"); // Usa LIKE per trovare corrispondenze parziali
+//            try (ResultSet rs = pstmt.executeQuery()) {
+//                while (rs.next()) {
+//                    libri.add(creaLibroDaResultSet(rs));
+//                }
+//            }
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+//        }
+//        return libri;
+//    }
+//
+//    @Override
+//    public List<Libro> cercaLibriByGenere(String genere){
+//        List<Libro> libri = new ArrayList<>();
+//        String sql = "SELECT * FROM " + Common_constants.DB_LIBRI_TABLE_NAME + " WHERE LOWER(genere) LIKE ?";
+//        try (Connection connessione = getConnection();
+//             PreparedStatement pstmt = connessione.prepareStatement(sql)) {
+//            pstmt.setString(1, "%" + genere.toLowerCase() + "%"); // Usa LIKE per trovare corrispondenze parziali
+//            try (ResultSet rs = pstmt.executeQuery()) {
+//                while (rs.next()) {
+//                    libri.add(creaLibroDaResultSet(rs));
+//                }
+//            }
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+//        }
+//        return libri;
+//    }
+//
+//    @Override
+//    public List<Libro> cercaLibriByValutazione(int valutazione){
+//        List<Libro> libri = new ArrayList<>();
+//        String sql = "SELECT * FROM " + Common_constants.DB_LIBRI_TABLE_NAME + " WHERE LOWER(valutazione) LIKE ?";
+//        try (Connection connessione = getConnection();
+//             PreparedStatement pstmt = connessione.prepareStatement(sql)) {
+//            pstmt.setString(1, "%" + valutazione + "%"); // Usa LIKE per trovare corrispondenze parziali
+//            try (ResultSet rs = pstmt.executeQuery()) {
+//                while (rs.next()) {
+//                    libri.add(creaLibroDaResultSet(rs));
+//                }
+//            }
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+//        }
+//        return libri;
+//    }
+@Override
+public List<String> getAutoriDistinti() throws SQLException{
+
+    //prendo gli autori dal database
+    List<String> autoriDistinti = new ArrayList<>();
+    //scrivo la query
+    String sql = "SELECT DISTINCT autore FROM " +
+            Common_constants.DB_LIBRI_TABLE_NAME +
+            " ORDER BY autore ASC"; // *** CORREZIONE QUI: "ORDER BY" invece di "ORDERED BY" ***
+    try (Connection connessione = getConnection();
+         Statement smt = connessione.createStatement();
+         ResultSet rs = smt.executeQuery(sql)){
+        while(rs.next()){
+            autoriDistinti.add(rs.getString("autore"));
+        }
+
+    }catch(SQLException e){
+        System.out.println("ERRORE");
+        e.printStackTrace();
+        throw e;
+    }
+    return autoriDistinti;
+}
+
+
+    @Override
+    public List<String> getGeneriDistinti() throws SQLException{
+
+        //prendo gli autori dal database
+        List<String> generiDistinti = new ArrayList<>();
+        //scrivo la query
+        String sql = "SELECT DISTINCT genere FROM " +
+                Common_constants.DB_LIBRI_TABLE_NAME +
+                " ORDER BY genere ASC"; // *** CORREZIONE QUI: "ORDER BY" invece di "ORDERED BY" ***
+        try (Connection connessione = getConnection();
+             Statement smt = connessione.createStatement();
+             ResultSet rs = smt.executeQuery(sql)){
+            while(rs.next()){
+                generiDistinti.add(rs.getString("genere"));
+            }
+
+        }catch(SQLException e){
+            System.out.println("ERRORE");
+            e.printStackTrace();
+            throw e;
+        }
+        return generiDistinti;
+    }
+
+    @Override
+    public List<Libro> cercaLibriByAutore(String autore) throws SQLException { // Aggiunto throws SQLException
+        List<Libro> libri = new ArrayList<>();
+        String sql = "SELECT * FROM " + Common_constants.DB_LIBRI_TABLE_NAME + " WHERE LOWER(autore) LIKE ?";
+        try (Connection connessione = getConnection();
+             PreparedStatement pstmt = connessione.prepareStatement(sql)) {
+            pstmt.setString(1, "%" + autore.toLowerCase() + "%"); // Usa LIKE per trovare corrispondenze parziali
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    libri.add(creaLibroDaResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            // È meglio rilanciare SQLException invece di RuntimeException qui per una gestione più chiara
+            System.err.println("ERRORE DATABASE: Errore durante la ricerca per autore: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+        return libri;
+    }
+
+    @Override
+    public List<Libro> cercaLibriByGenere(String genere) throws SQLException { // Aggiunto throws SQLException
+        List<Libro> libri = new ArrayList<>();
+        String sql = "SELECT * FROM " + Common_constants.DB_LIBRI_TABLE_NAME + " WHERE LOWER(genere) LIKE ?";
+        try (Connection connessione = getConnection();
+             PreparedStatement pstmt = connessione.prepareStatement(sql)) {
+            pstmt.setString(1, "%" + genere.toLowerCase() + "%"); // Usa LIKE per trovare corrispondenze parziali
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    libri.add(creaLibroDaResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            // È meglio rilanciare SQLException invece di RuntimeException qui
+            System.err.println("ERRORE DATABASE: Errore durante la ricerca per genere: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+        return libri;
+    }
+
+    @Override
+    public List<Libro> cercaLibriByValutazione(int valutazione) throws SQLException { // Aggiunto throws SQLException
+        List<Libro> libri = new ArrayList<>();
+        // Per la valutazione, di solito si cerca un valore esatto o >=
+        // "LIKE ?" con un INT non è corretto. Usiamo "=" o ">=".
+        String sql = "SELECT * FROM " + Common_constants.DB_LIBRI_TABLE_NAME + " WHERE valutazione = ?";
+        try (Connection connessione = getConnection();
+             PreparedStatement pstmt = connessione.prepareStatement(sql)) {
+            pstmt.setInt(1, valutazione); // Imposta l'intero direttamente
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    libri.add(creaLibroDaResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            // È meglio rilanciare SQLException invece di RuntimeException qui
+            System.err.println("ERRORE DATABASE: Errore durante la ricerca per valutazione: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+        return libri;
+    }
+
+
 }

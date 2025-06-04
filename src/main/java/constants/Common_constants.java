@@ -8,8 +8,11 @@ public class Common_constants {
     //parto dai colori scelti per la gui  #e5e3ce
     //#251d47
     //#152443
-    public static final Color colore_primario = Color.decode("#251d47");
-    public static final Color colore_secondario = Color.decode("#e59a5b");
+    //#251d47
+    public static final Color colore_primario = Color.decode("#332D56");
+    //#4E6688
+    //#e59a5b
+    public static final Color colore_secondario = Color.decode("#4E6688");
     public static final Color colore_font_titoli = Color.decode("#ffffff");
     public static final Color colore_bottoni = Color.decode("#84aaff");
     public static final Color colore_menu_modifica = Color.decode("#dd863d");

@@ -73,4 +73,37 @@ public class GestoreLibreria implements Subject{
         notifyObserver();
     }
 
+
+    //metodo per la ricerca
+    public List<Libro> cercaLibri(String terminaRicerca) throws SQLException{
+        if (terminaRicerca == null || terminaRicerca.trim().isEmpty()){
+            return libroRepository.tuttiLibri();
+        }
+        return libroRepository.cercaLibri(terminaRicerca);
+    }
+
+    public List<String> getAutoriDisponibili() throws SQLException{
+        return libroRepository.getAutoriDistinti();
+    }
+
+    public List<String> getGeneriDisponibili() throws SQLException{
+        return libroRepository.getGeneriDistinti();
+    }
+
+    // Metodo per applicare un filtro (da chiamare dal listener del JMenuItem)
+    public List<Libro> getLibriFiltrati(String filterType, String filterValue) throws SQLException {
+
+        switch (filterType) {
+            case "AUTORE":
+                return libroRepository.cercaLibriByAutore(filterValue); // Nuovo metodo da aggiungere
+            case "GENERE":
+                return libroRepository.cercaLibriByGenere(filterValue); // Nuovo metodo da aggiungere
+            case "VALUTAZIONE":
+                // Questo è un caso speciale perché Valutazione è un int
+                return libroRepository.cercaLibriByValutazione(Integer.parseInt(filterValue)); // Nuovo metodo
+            default:
+                return libroRepository.tuttiLibri(); // Nessun filtro valido, restituisci tutto
+        }
+    }
+
 }
