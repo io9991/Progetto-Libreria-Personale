@@ -436,5 +436,35 @@ public List<String> getAutoriDistinti() throws SQLException{
         return libri;
     }
 
+    //per l'ordinamento utilizzo statement
+    @Override
+    public List<Libro> libriOrdinati(String criterio, String direzione) throws SQLException {
+
+        List<Libro> ordinati = new ArrayList<>();
+        String sql = "SELECT * FROM " + Common_constants.DB_LIBRI_TABLE_NAME;
+
+        //order by
+        if(criterio != null || !criterio.isEmpty() && (direzione.equalsIgnoreCase("ASC") || direzione.equalsIgnoreCase("DESC"))){
+            sql += " ORDER BY " + criterio + " " + direzione;
+        }else {
+            System.out.println("Parametri non validi");
+        }
+
+        try (Connection connessione = getConnection();
+            Statement stmt = connessione.createStatement();
+            ResultSet rs = stmt.executeQuery(sql)){
+
+            while (rs.next()){
+                ordinati.add(creaLibroDaResultSet(rs));
+            }
+
+        }catch (SQLException e){
+            System.out.println("ERRORE");
+            e.printStackTrace();
+            throw e;
+        }
+        return ordinati;
+    }
+
 
 }

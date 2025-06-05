@@ -24,7 +24,8 @@ public interface LibroRepository {
     List<Libro> cercaLibriByGenere(String genere) throws SQLException;
     List<Libro> cercaLibriByValutazione(int valutazione) throws SQLException;
 
-    //per l'ordinamento todo
+    //per l'ordinamento
+    List<Libro> libriOrdinati(String criterio, String direzione ) throws SQLException;
 
 
 }

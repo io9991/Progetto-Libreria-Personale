@@ -30,6 +30,9 @@ public class HomeForm extends Form implements Observer {
     private String currentFilterType = ""; // Tiene traccia del tipo di filtro attivo (es. "AUTORE")
     private String currentFilterValue = ""; // Tiene traccia del valore del filtro attivo (es. "Dante Alighieri")
 
+    //variabili per l'ordinamento
+    private String criterioCorrente = ""; //la colonna di ordinamento
+    private String direzioneCorrente = ""; //da a-z o da z-a
 
     public HomeForm(String titolo) throws SQLException {
         super(titolo);
@@ -70,14 +73,7 @@ public class HomeForm extends Form implements Observer {
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         searchPanel.setOpaque(false);
         searchPanel.add(ricerca);
-//        JButton searchButton = new JButton("🔍");
-//        searchButton.setPreferredSize(new Dimension(40, 35));
-//        searchButton.setBackground(Common_constants.colore_bottoni);
-//        searchButton.setForeground(Common_constants.colore_font_titoli);
-//        searchButton.setFont(new Font("Dialog", Font.BOLD, 18));
-//        searchButton.setBorder(BorderFactory.createLineBorder(Common_constants.colore_secondario, 1));
-//        searchButton.setFocusPainted(false);
-//        searchPanel.add(searchButton);
+
         //bottone per tornare alla 'home'
         JButton homeButton = new JButton("⌂");
         homeButton.setPreferredSize(new Dimension(40, 35));
@@ -149,12 +145,171 @@ public class HomeForm extends Form implements Observer {
             addBookForm.setVisible(true);
         });
 
-        //per implementare filtro e ordine utilizzo dei menu a tendina
-        //filtra.addActionListener(e -> JOptionPane.showMessageDialog(this, "Azione Filtra (TEST)"));
-        ordina.addActionListener(e -> JOptionPane.showMessageDialog(this, "Azione Ordina (TEST)"));
+        //bottoni per implementare il filtro e l'ordine
+
         filtra.addActionListener(e -> mostraPopupMenu(filtra));
 
+        ordina.addActionListener(e -> mostraPopupMenuOrdine(ordina));
 
+    }
+
+    //*** FUNZIONI PER L'ORDINE ***//
+
+    //popup menu di ordine
+    private void mostraPopupMenuOrdine(Component invoker){
+        JPopupMenu ordineMenu = new JPopupMenu("Ordine per :");
+
+        //metto le opzioni possibili (stringa, criterio, direzione)
+        //titolo alfabetico e inverso
+        addOrdineItem(ordineMenu, "Titolo (A-Z)", "titolo", "ASC");
+        addOrdineItem(ordineMenu, "Titolo (Z-A)", "titolo", "DESC");
+        ordineMenu.addSeparator();
+        //autore
+        addOrdineItem(ordineMenu, "Autore (A-Z)", "autore", "ASC");
+        addOrdineItem(ordineMenu, "Autore (Z-A)", "autore", "DESC");
+        ordineMenu.addSeparator();
+        //genere
+        addOrdineItem(ordineMenu, "Genere (A-Z)", "genere", "ASC");
+        addOrdineItem(ordineMenu, "Genere (Z-A)", "genere", "DESC");
+        ordineMenu.addSeparator();
+        //valutazione
+        addOrdineItem(ordineMenu, "Valutazione (1-5)", "valutazione", "ASC");
+        addOrdineItem(ordineMenu, "Valutazione (5-1)", "valutazione", "DESC");
+        ordineMenu.addSeparator();
+
+        JMenuItem annullaOrdineItem = new JMenuItem("Annulla Ordinamento / Ripristina Vista");
+        annullaOrdineItem.addActionListener(e -> {
+            try {
+                // Resetta le variabili di stato dell'ordinamento
+                criterioCorrente = "";
+                direzioneCorrente = "";
+
+                // A questo punto, devi decidere cosa mostrare:
+                // 1. Se c'è un filtro attivo, riapplica quello.
+                // 2. Se c'è un termine di ricerca attivo, riapplica quello.
+                // 3. Altrimenti, torna alla visualizzazione predefinita (tutti i libri organizzati per stato).
+                if (!currentFilterType.isEmpty()) {
+                    // Se c'è un filtro attivo, riapplica il filtro
+                    applyFilter(currentFilterType, currentFilterValue);
+                } else if (!currentSearchTerm.isEmpty()) {
+                    // Se c'è una ricerca attiva, riesegui la ricerca
+                    performSearch(currentSearchTerm);
+                } else {
+                    // Altrimenti, torna alla visualizzazione "Home" predefinita
+                    refreshLibriCategories();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        });
+        ordineMenu.add(annullaOrdineItem);
+
+        ordineMenu.show(invoker, 0, invoker.getHeight());
+    }
+
+    private void addOrdineItem(JPopupMenu menu, String testo, String criterio, String direzione){
+        JMenuItem item = new JMenuItem(testo);
+        item.addActionListener(e -> applyOrder(criterio, direzione));
+        menu.add(item);
+    }
+
+    private String getDirezione(String direzione){
+        if (direzione.equals("ASC")){
+            return "Crescente";
+        }else {
+            return "Decrescente";
+        }
+    }
+
+    //funzone applica ordinamento e di conseguenza aggiorna la GUI
+//    private void applyOrder(String criterio, String direzione){
+//        this.criterioCorrente = criterio;
+//        this.direzioneCorrente = direzione;
+//
+//        try{
+//            List<Libro> ordinati;
+//            ordinati = gestoreLibreria.getLibriOrdini(criterio, direzione);
+//            //se non ci troviamo nella config corretta
+//            if(!currentFilterType.isEmpty()){
+//                ordinati = gestoreLibreria.getLibriFiltrati(currentFilterType, currentFilterValue);
+//                String titolo = "Ordinamento per " + criterio + "in ordine " + getDirezione(direzione);
+//            }
+//        }catch (SQLException e){
+//            System.out.println("Errore");
+//            e.printStackTrace();
+//        }
+//
+//    }
+    private void applyOrder(String criterio, String direzione){
+        this.criterioCorrente = criterio;
+        this.direzioneCorrente = direzione;
+
+        try{
+            List<Libro> libriDaVisualizzare;
+            String titoloDisplay = "Ordinamento: " + getDirezione(direzione) + " per " + criterio;
+
+            // Se c'è un filtro attivo, recupera i libri filtrati e poi li ordina
+            // Se c'è una ricerca attiva, recupera i libri cercati e poi li ordina
+            // Altrimenti, recupera tutti i libri e li ordina.
+            if (!currentFilterType.isEmpty()) {
+                libriDaVisualizzare = gestoreLibreria.getLibriFiltrati(currentFilterType, currentFilterValue);
+                // Dopo aver filtrato, ordina questa lista in memoria o modifica getLibriFiltrati per accettare anche l'ordinamento.
+                // L'ideale sarebbe una singola query SQL che combina filtro e ordinamento.
+                // Per ora, useremo il metodo getLibriOrdinati che ordina l'intera tabella e poi applichiamo il filtro in memoria.
+                // O meglio ancora, passiamo il criterio di ordinamento al metodo che fa la ricerca/filtro.
+                // DATA LA STRUTTURA ATTUALE, È MEGLIO FARE COSÌ:
+                libriDaVisualizzare = gestoreLibreria.getLibriOrdini(criterioCorrente, direzioneCorrente);
+                // Ora, filtra questa lista se c'è un filtro attivo
+                libriDaVisualizzare = libriDaVisualizzare.stream()
+                        .filter(libro -> {
+                            try {
+                                if (currentFilterType.equals("AUTORE")) return libro.getAutore().toLowerCase().contains(currentFilterValue.toLowerCase());
+                                if (currentFilterType.equals("GENERE")) return libro.getGenere_appartenenza().toLowerCase().contains(currentFilterValue.toLowerCase());
+                                if (currentFilterType.equals("VALUTAZIONE")) return libro.getValutazione() == Integer.parseInt(currentFilterValue);
+                            } catch (Exception e) {
+                                // Gestire errori di parsing o altro in caso di valori non validi nel filtro
+                                return false;
+                            }
+                            return true;
+                        })
+                        .collect(Collectors.toList());
+
+                titoloDisplay = "Filtro: " + currentFilterType + " = " + currentFilterValue + ", Ordinamento: " + getDirezione(direzione) + " per " + criterio;
+
+            } else if (!currentSearchTerm.isEmpty()) {
+                // Se c'è una ricerca attiva, riapplica la ricerca e poi ordina (in memoria, se la query non lo fa)
+                libriDaVisualizzare = gestoreLibreria.cercaLibri(currentSearchTerm);
+                // Ipotizzo che cercaLibri non ordini. Potresti voler aggiungere un ordinamento qui in memoria.
+                // Ad esempio: libriDaVisualizzare.sort(Comparator.comparing(Libro::getTitolo)); (se volessi un ordinamento fisso)
+                // Oppure modificare cercaLibri per accettare anche ordinamento.
+                // Per ora, usiamo getLibriOrdinati come base e poi filtriamo la ricerca in memoria.
+                libriDaVisualizzare = gestoreLibreria.getLibriOrdini(criterioCorrente, direzioneCorrente);
+                libriDaVisualizzare = libriDaVisualizzare.stream()
+                        .filter(libro ->
+                                libro.getTitolo().toLowerCase().contains(currentSearchTerm.toLowerCase()) ||
+                                        libro.getAutore().toLowerCase().contains(currentSearchTerm.toLowerCase()) ||
+                                        libro.getCodice_ISBN().toLowerCase().contains(currentSearchTerm.toLowerCase()) ||
+                                        libro.getGenere_appartenenza().toLowerCase().contains(currentSearchTerm.toLowerCase())
+                        )
+                        .collect(Collectors.toList());
+                titoloDisplay = "Ricerca per \"" + currentSearchTerm + "\", Ordinamento: " + getDirezione(direzione) + " per " + criterio;
+
+            } else {
+                // Se non ci sono filtri o ricerche, ordina tutti i libri
+                libriDaVisualizzare = gestoreLibreria.getLibriOrdini(criterio, direzione);
+                titoloDisplay = "Ordinamento: " + getDirezione(direzione) + " per " + criterio;
+            }
+
+            displaySearchResults(libriDaVisualizzare, titoloDisplay);
+
+        } catch (SQLException e){
+            System.out.println("Errore nell'applicazione dell'ordinamento o del filtro/ricerca combinato.");
+            e.printStackTrace();
+            // Mostra un messaggio di errore all'utente
+            JOptionPane.showMessageDialog(this,
+                    "Errore durante l'applicazione dell'ordinamento: " + e.getMessage(),
+                    "Errore di Ordinamento", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     //mostra Popup menu
@@ -270,19 +425,40 @@ public class HomeForm extends Form implements Observer {
         }
     }
 
-    @Override
-    public void update() {
-        try {
-            System.out.println("HomeForm: Notifica di cambiamento ricevuta. Aggiorno la visualizzazione dei libri.");
-            refreshLibriCategories();
-        } catch (SQLException e) {
-            System.err.println("ERRORE GUI: Errore durante l'aggiornamento della HomeForm: " + e.getMessage());
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this,
-                    "Errore durante l'aggiornamento della lista dei libri: " + e.getMessage(),
-                    "Errore di Visualizzazione", JOptionPane.ERROR_MESSAGE);
+//    @Override
+//    public void update() {
+//        try {
+//            System.out.println("HomeForm: Notifica di cambiamento ricevuta. Aggiorno la visualizzazione dei libri.");
+//            refreshLibriCategories();
+//        } catch (SQLException e) {
+//            System.err.println("ERRORE GUI: Errore durante l'aggiornamento della HomeForm: " + e.getMessage());
+//            e.printStackTrace();
+//            JOptionPane.showMessageDialog(this,
+//                    "Errore durante l'aggiornamento della lista dei libri: " + e.getMessage(),
+//                    "Errore di Visualizzazione", JOptionPane.ERROR_MESSAGE);
+//        }
+//    }
+        @Override
+        public void update() {
+                try {
+                    System.out.println("HomeForm: Notifica di cambiamento ricevuta. Aggiorno la visualizzazione dei libri.");
+                    if (!currentFilterType.isEmpty()) {
+                        applyFilter(currentFilterType, currentFilterValue); // Riapplica il filtro corrente
+                    } else if (!currentSearchTerm.isEmpty()) {
+                        performSearch(currentSearchTerm); // Riesegue l'ultima ricerca
+                    } else if (!criterioCorrente.isEmpty()) { // Riapplica l'ordinamento corrente
+                        applyOrder(criterioCorrente, direzioneCorrente);
+                    } else {
+                        refreshLibriCategories(); // Altrimenti, ricarica tutto (stato "home")
+                    }
+                } catch (SQLException e) {
+                    System.err.println("ERRORE GUI: Errore durante l'aggiornamento della HomeForm: " + e.getMessage());
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(this,
+                            "Errore durante l'aggiornamento della lista dei libri: " + e.getMessage(),
+                            "Errore di Visualizzazione", JOptionPane.ERROR_MESSAGE);
+                }
         }
-    }
 
     // Metodo per ricaricare i libri dalla fonte reale (GestoreLibreria)
     private void refreshLibriCategories() throws SQLException {

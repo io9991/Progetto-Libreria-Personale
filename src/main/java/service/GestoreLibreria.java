@@ -106,4 +106,9 @@ public class GestoreLibreria implements Subject{
         }
     }
 
+    //per l'ordinamento
+    public List<Libro> getLibriOrdini(String criterio, String direzione) throws SQLException {
+        return libroRepository.libriOrdinati(criterio, direzione);
+    }
+
 }
