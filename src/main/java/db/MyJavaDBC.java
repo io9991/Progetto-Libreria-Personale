@@ -1,6 +1,6 @@
 package db;
 
-//ho deciso di implementare questa classe usando il dp SINGLETON
+
 
 //importo quello che mi serve
 import java.sql.*;
@@ -10,12 +10,20 @@ import builder.Libro;
 import constants.Common_constants;
 import constants.Common_constants.*;
 
+/*
+    Classe che rappresenta il database, il quale sarà al centro
+    delle operazioni che verranno fatte, in particolare data
+    l'esigenza che si ha di connettersi a questo db, ho deciso di implementarlo
+    seguendo la struttura del design pattern SINGLETON, applicando la tecnica
+    del lazy inizialization
+ */
+
 public class MyJavaDBC {
 
     private static MyJavaDBC instance = null;
     private Connection connection;
 
-    //costruttore vuoto
+    //costruttore privato
     private MyJavaDBC(){
 
         try{

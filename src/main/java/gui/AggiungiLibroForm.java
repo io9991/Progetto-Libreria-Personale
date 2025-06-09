@@ -36,9 +36,6 @@ public class AggiungiLibroForm extends JDialog {
     private AggiungiLibroFormMediator mediator;
     private Libro libroToModify;
 
-   // public AggiungiLibroForm(String titolo) {
-   //     this(titolo, null);
-   // }
 
     public AggiungiLibroForm(String titolo, Libro libroDaModificare) {
         super((JFrame) null, titolo, true);
@@ -308,25 +305,5 @@ public class AggiungiLibroForm extends JDialog {
         return libroToModify;
     }
 
-//    public static void main(String[] args) {
-//        SwingUtilities.invokeLater(() -> {
-//            // Esempio per l'aggiunta di un nuovo libro
-//            // AggiungiLibroForm formAggiungi = new AggiungiLibroForm("Aggiungi un nuovo libro");
-//            // formAggiungi.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-//            // formAggiungi.setVisible(true);
-//
-//            // Esempio per la modifica di un libro (scommenta per testare)
-//            Libro libroEsempio = new Libro.Builder()
-//                    .setTitolo("Il Signore degli Anelli")
-//                    .setAutore("J.R.R. Tolkien")
-//                    .setCodiceISBN("978-8845292613") // Assicurati che questo ISBN esista nel tuo DB per il test
-//                    .setGenereAppartenenza("Fantasy")
-//                    .setValutazione(5)
-//                    .setStato(Stato.LETTO)
-//                    .build();
-//            AggiungiLibroForm formModifica = new AggiungiLibroForm("Modifica Libro", libroEsempio);
-//            formModifica.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-//            formModifica.setVisible(true);
-//        });
-//    }
+
 }

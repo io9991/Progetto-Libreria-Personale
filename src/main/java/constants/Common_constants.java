@@ -1,17 +1,18 @@
 package constants;
 
 import java.awt.*;
-//qui metterò le costanti comuni come i colori, font, e le caratteristiche del database
+
+/*
+    Ai fini di mantenere un maggiore ordine, questa classe
+    contiene quelle costanti che appaiono con un'alta frequenza
+    all'interno delle varie classi e metodi, in particolare
+    quelle che appaiono nella GUI e nel DB
+ */
 
 public class Common_constants {
 
-    //parto dai colori scelti per la gui  #e5e3ce
-    //#251d47
-    //#152443
-    //#251d47
+    //costanti della gui
     public static final Color colore_primario = Color.decode("#332D56");
-    //#4E6688
-    //#e59a5b
     public static final Color colore_secondario = Color.decode("#4E6688");
     public static final Color colore_font_titoli = Color.decode("#ffffff");
     public static final Color colore_bottoni = Color.decode("#84aaff");

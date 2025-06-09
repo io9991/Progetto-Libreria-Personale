@@ -10,16 +10,24 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors; // Per il filtraggio
-
-import builder.Libro; // Assicurati che l'importazione sia corretta per la classe Libro
-import builder.Stato; // Assicurati che l'importazione sia corretta per l'enum Stato
+import java.util.stream.Collectors;
+import builder.Libro;
+import builder.Stato;
 import observer.Observer;
 import service.GestoreLibreria;
 
-// Per ora, non implementiamo LibreriaObserver e LibreriaManager
-// observer.LibreriaObserver;
-// service.LibreriaManager;
+/*
+todo controlla il refresh come pulsante
+ */
+
+
+/*
+    Questa rappresenta la pagina iniziale con cui l'utente si interfaccia
+    oltre ad andare a lavorare sulla gui, qui si sfruttano le funzionalità
+    del pattern OBSERVER in modo tale che ogni qual volta cambi qualcosa all'interno
+    del db venga notificato il tutto e dunque avvenga facilmente una visualizzazione
+    dei cambiamenti avvenuti.
+ */
 
 
 public class HomeForm extends Form implements Observer {
@@ -31,7 +39,7 @@ public class HomeForm extends Form implements Observer {
     private String currentFilterValue = ""; // Tiene traccia del valore del filtro attivo (es. "Dante Alighieri")
 
     //variabili per l'ordinamento
-    private String criterioCorrente = ""; //la colonna di ordinamento
+    private String criterioCorrente = ""; //la colonna di ordinamento (autore, titolo, genere ... )
     private String direzioneCorrente = ""; //da a-z o da z-a
 
     public HomeForm(String titolo) throws SQLException {
@@ -39,14 +47,19 @@ public class HomeForm extends Form implements Observer {
         this.gestoreLibreria = GestoreLibreria.getInstance();
         this.gestoreLibreria.attach(this);
         getContentPane().setLayout(new BorderLayout());
-
         addGuiComponent();
-
         refreshLibriCategories();
     }
 
+    /*
+        l'intenzione è quella di dividere la grafica in più parti, ovvero pannelli :
+        SUPERIORE -> Titolo, Barra di Ricerca, Icona della casetta per ristabilire la vista
+        CENTRALE ->  Visuale dei libri disposti per stato : TUTTI, DA_LEGGERE, IN LETTURA, LETTI
+        DESTRA -> Controllo di Filtro e ordine tramite pulsanti (che poi saranno meno a tendina)
+     */
+
     private void addGuiComponent() {
-        // --- Pannello superiore: Titolo e Barra di Ricerca ---
+        // --- Pannello superiore: Titolo, Barra di Ricerca, vista iniziale ---
         JPanel superiore = new JPanel(new BorderLayout(10, 0));
         superiore.setBackground(Common_constants.colore_primario);
         superiore.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
@@ -62,6 +75,10 @@ public class HomeForm extends Form implements Observer {
         ricerca.setForeground(Common_constants.colore_font_titoli);
         ricerca.setFont(new Font("Dialog", Font.BOLD, 15));
         ricerca.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+
+        /*
+         ActionListener per cercare
+         */
 
         ricerca.addActionListener(new ActionListener() {
             @Override
@@ -86,9 +103,26 @@ public class HomeForm extends Form implements Observer {
         homeButton.setFocusPainted(false);
         searchPanel.add(homeButton);
 
+        /*
+         mi permette di tornare alla vista iniziale
+         */
+
         homeButton.addActionListener(e -> {
             try {
+              //  refreshLibriCategories();
+                //devo andare a toglieree quelle che sono
+                //le variabili di stato relativi a filtro/ordinamento e ricerca
+                currentSearchTerm = "";  //campo per tenere traccia del termine di ricerca corrente
+                currentFilterType = ""; // Tiene traccia del tipo di filtro attivo (es. "AUTORE")
+                currentFilterValue = ""; // Tiene traccia del valore del filtro attivo (es. "Dante Alighieri")
+
+                //variabili per l'ordinamento
+                criterioCorrente = ""; //la colonna di ordinamento (autore, titolo, genere ... )
+                direzioneCorrente = ""; //da a-z o da z-a
+
+                //solo adesso dopo aver azzerato tutti i filtri posso tornare alla home
                 refreshLibriCategories();
+
             } catch (SQLException ex) {
                 throw new RuntimeException(ex);
             }
@@ -138,7 +172,7 @@ public class HomeForm extends Form implements Observer {
         filtra.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         ordina.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        // Listener per il pulsante "Aggiungi"
+        // Listener per il pulsante "Aggiungi" che permette di aggiungere un libro
         aggiungi.addActionListener(e -> {
             AggiungiLibroForm addBookForm = new AggiungiLibroForm("Aggiungi un nuovo libro", null);
             addBookForm.setModal(true);
@@ -184,10 +218,6 @@ public class HomeForm extends Form implements Observer {
                 criterioCorrente = "";
                 direzioneCorrente = "";
 
-                // A questo punto, devi decidere cosa mostrare:
-                // 1. Se c'è un filtro attivo, riapplica quello.
-                // 2. Se c'è un termine di ricerca attivo, riapplica quello.
-                // 3. Altrimenti, torna alla visualizzazione predefinita (tutti i libri organizzati per stato).
                 if (!currentFilterType.isEmpty()) {
                     // Se c'è un filtro attivo, riapplica il filtro
                     applyFilter(currentFilterType, currentFilterValue);
@@ -207,6 +237,12 @@ public class HomeForm extends Form implements Observer {
         ordineMenu.show(invoker, 0, invoker.getHeight());
     }
 
+    /*
+     Questo metodo permette di aggiungere un ordine, dunque segue un criterio e una direzione
+       @param menu
+
+     */
+
     private void addOrdineItem(JPopupMenu menu, String testo, String criterio, String direzione){
         JMenuItem item = new JMenuItem(testo);
         item.addActionListener(e -> applyOrder(criterio, direzione));
@@ -221,25 +257,7 @@ public class HomeForm extends Form implements Observer {
         }
     }
 
-    //funzone applica ordinamento e di conseguenza aggiorna la GUI
-//    private void applyOrder(String criterio, String direzione){
-//        this.criterioCorrente = criterio;
-//        this.direzioneCorrente = direzione;
-//
-//        try{
-//            List<Libro> ordinati;
-//            ordinati = gestoreLibreria.getLibriOrdini(criterio, direzione);
-//            //se non ci troviamo nella config corretta
-//            if(!currentFilterType.isEmpty()){
-//                ordinati = gestoreLibreria.getLibriFiltrati(currentFilterType, currentFilterValue);
-//                String titolo = "Ordinamento per " + criterio + "in ordine " + getDirezione(direzione);
-//            }
-//        }catch (SQLException e){
-//            System.out.println("Errore");
-//            e.printStackTrace();
-//        }
-//
-//    }
+
     private void applyOrder(String criterio, String direzione){
         this.criterioCorrente = criterio;
         this.direzioneCorrente = direzione;
@@ -253,13 +271,7 @@ public class HomeForm extends Form implements Observer {
             // Altrimenti, recupera tutti i libri e li ordina.
             if (!currentFilterType.isEmpty()) {
                 libriDaVisualizzare = gestoreLibreria.getLibriFiltrati(currentFilterType, currentFilterValue);
-                // Dopo aver filtrato, ordina questa lista in memoria o modifica getLibriFiltrati per accettare anche l'ordinamento.
-                // L'ideale sarebbe una singola query SQL che combina filtro e ordinamento.
-                // Per ora, useremo il metodo getLibriOrdinati che ordina l'intera tabella e poi applichiamo il filtro in memoria.
-                // O meglio ancora, passiamo il criterio di ordinamento al metodo che fa la ricerca/filtro.
-                // DATA LA STRUTTURA ATTUALE, È MEGLIO FARE COSÌ:
                 libriDaVisualizzare = gestoreLibreria.getLibriOrdini(criterioCorrente, direzioneCorrente);
-                // Ora, filtra questa lista se c'è un filtro attivo
                 libriDaVisualizzare = libriDaVisualizzare.stream()
                         .filter(libro -> {
                             try {
@@ -267,7 +279,6 @@ public class HomeForm extends Form implements Observer {
                                 if (currentFilterType.equals("GENERE")) return libro.getGenere_appartenenza().toLowerCase().contains(currentFilterValue.toLowerCase());
                                 if (currentFilterType.equals("VALUTAZIONE")) return libro.getValutazione() == Integer.parseInt(currentFilterValue);
                             } catch (Exception e) {
-                                // Gestire errori di parsing o altro in caso di valori non validi nel filtro
                                 return false;
                             }
                             return true;
@@ -277,12 +288,7 @@ public class HomeForm extends Form implements Observer {
                 titoloDisplay = "Filtro: " + currentFilterType + " = " + currentFilterValue + ", Ordinamento: " + getDirezione(direzione) + " per " + criterio;
 
             } else if (!currentSearchTerm.isEmpty()) {
-                // Se c'è una ricerca attiva, riapplica la ricerca e poi ordina (in memoria, se la query non lo fa)
                 libriDaVisualizzare = gestoreLibreria.cercaLibri(currentSearchTerm);
-                // Ipotizzo che cercaLibri non ordini. Potresti voler aggiungere un ordinamento qui in memoria.
-                // Ad esempio: libriDaVisualizzare.sort(Comparator.comparing(Libro::getTitolo)); (se volessi un ordinamento fisso)
-                // Oppure modificare cercaLibri per accettare anche ordinamento.
-                // Per ora, usiamo getLibriOrdinati come base e poi filtriamo la ricerca in memoria.
                 libriDaVisualizzare = gestoreLibreria.getLibriOrdini(criterioCorrente, direzioneCorrente);
                 libriDaVisualizzare = libriDaVisualizzare.stream()
                         .filter(libro ->
@@ -400,7 +406,6 @@ public class HomeForm extends Form implements Observer {
             String title = "Filtro: " + type + " = " + value;
             displaySearchResults(filteredLibri, title); // Riutilizziamo displaySearchResults
         } catch (SQLException e) {
-            //handleGuiError("Errore durante l'applicazione del filtro", e);
             e.printStackTrace();
         }
     }
@@ -425,19 +430,6 @@ public class HomeForm extends Form implements Observer {
         }
     }
 
-//    @Override
-//    public void update() {
-//        try {
-//            System.out.println("HomeForm: Notifica di cambiamento ricevuta. Aggiorno la visualizzazione dei libri.");
-//            refreshLibriCategories();
-//        } catch (SQLException e) {
-//            System.err.println("ERRORE GUI: Errore durante l'aggiornamento della HomeForm: " + e.getMessage());
-//            e.printStackTrace();
-//            JOptionPane.showMessageDialog(this,
-//                    "Errore durante l'aggiornamento della lista dei libri: " + e.getMessage(),
-//                    "Errore di Visualizzazione", JOptionPane.ERROR_MESSAGE);
-//        }
-//    }
         @Override
         public void update() {
                 try {

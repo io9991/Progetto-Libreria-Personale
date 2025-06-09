@@ -10,7 +10,7 @@ import java.sql.SQLException;
 
 public class AppLauncher {
 
-   // static Libro l = new Libro.Builder().setTitolo("Ciao").setAutore("Hey").setCodiceISBN("1234").setStato(Stato.LETTO).setGenereAppartenenza("").setValutazione(3).build();
+    //static Libro l = new Libro.Builder().setTitolo("Ciao").setAutore("Hey").setCodiceISBN("1234").setStato(Stato.LETTO).setGenereAppartenenza("").setValutazione(3).build();
     //main
     public static void main(String[] args) {
 
