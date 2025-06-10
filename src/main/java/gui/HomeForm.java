@@ -239,8 +239,10 @@ public class HomeForm extends Form implements Observer {
 
     /*
      Questo metodo permette di aggiungere un ordine, dunque segue un criterio e una direzione
-       @param menu
-
+        prende il menu che va a considerare
+        prende il testo che appare
+        prende il criterio(attributo del db)
+        prende la direzione in cui vogliamo visualizzarlo(crescente, decrescente)
      */
 
     private void addOrdineItem(JPopupMenu menu, String testo, String criterio, String direzione){
@@ -249,6 +251,9 @@ public class HomeForm extends Form implements Observer {
         menu.add(item);
     }
 
+    /*
+        piccolo metodo solo per ricevere una scritta più intuitiva al posto di ASC e DESC scrivo crescente e decrescente
+     */
     private String getDirezione(String direzione){
         if (direzione.equals("ASC")){
             return "Crescente";
@@ -258,12 +263,21 @@ public class HomeForm extends Form implements Observer {
     }
 
 
+    /*
+        permette di applicare l'ordine da noi scelto come prima detto l'ordine è caratterizzato dal
+        criterio e dalla direzione, in particolare lavoro in modo da far coesistere filtro, ricerca
+        e ordine, dunque questo sarà in un controllo
+     */
     private void applyOrder(String criterio, String direzione){
+
+        //settiamo il criterio e la direzione
         this.criterioCorrente = criterio;
         this.direzioneCorrente = direzione;
 
         try{
+            //lista dei libri che vado a visualizzare
             List<Libro> libriDaVisualizzare;
+            //titolo che appare
             String titoloDisplay = "Ordinamento: " + getDirezione(direzione) + " per " + criterio;
 
             // Se c'è un filtro attivo, recupera i libri filtrati e poi li ordina
@@ -318,7 +332,14 @@ public class HomeForm extends Form implements Observer {
         }
     }
 
-    //mostra Popup menu
+
+    /*
+        questo metodo permette di mostrare il menu dei filtri in particolare
+        i criteri di filtraggio saranno : Autore, Genere, Valutazione
+        data la presenza di diversi autori e generi si vanno a prendere dal database
+        esistente e si mettono nel menu
+     */
+
     private void mostraPopupMenu(Component invoker){
         JPopupMenu filterMenu = new JPopupMenu("Filtra per...");
 
@@ -326,11 +347,11 @@ public class HomeForm extends Form implements Observer {
         JMenuItem clearFilterItem = new JMenuItem("Mostra Tutti i Libri (Reset Filtro)");
         clearFilterItem.addActionListener(e -> {
             try {
+                //per resettare il filtro metto filtroType e filtroValue nulli e refresh
                 currentFilterType = "";
                 currentFilterValue = "";
                 refreshLibriCategories(); // Torna a mostrare tutti i libri
             } catch (SQLException ex) {
-               // handleGuiError("Errore durante il reset del filtro", ex);
                 ex.printStackTrace();
             }
         });
@@ -352,7 +373,7 @@ public class HomeForm extends Form implements Observer {
                 }
             }
         } catch (SQLException e) {
-           // handleGuiError("Errore nel caricamento degli autori", e);
+
             e.printStackTrace();
             authorMenu.add(new JMenuItem("Errore caricamento autori"));
             authorMenu.getItem(0).setEnabled(false);
@@ -374,7 +395,6 @@ public class HomeForm extends Form implements Observer {
                 }
             }
         } catch (SQLException e) {
-           // handleGuiError("Errore nel caricamento dei generi", e);
             e.printStackTrace();
             genreMenu.add(new JMenuItem("Errore caricamento generi"));
             genreMenu.getItem(0).setEnabled(false);
@@ -395,20 +415,26 @@ public class HomeForm extends Form implements Observer {
         filterMenu.show(invoker, 0, invoker.getHeight());
     }
 
+    /*
+        analogalmente all'ordine, anche il filtro ha una funzione
+        applica filtro che prende un tipo (Autore, Genere, Valutazione)
+        e valore del tipo
+     */
+
     private void applyFilter(String type, String value) {
         this.currentFilterType = type;
         this.currentFilterValue = value;
-        this.currentSearchTerm = ""; // Resetta la ricerca quando applichi un filtro
-
+        this.currentSearchTerm = ""; // Resetta la ricerca quando applichi un filtro //todo lasciare la ricerca nel filtro
 
         try {
             List<Libro> filteredLibri = gestoreLibreria.getLibriFiltrati(type, value);
-            String title = "Filtro: " + type + " = " + value;
+            String title = "Libri filtrati per " + type + value;
             displaySearchResults(filteredLibri, title); // Riutilizziamo displaySearchResults
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
 
     //metodo per la ricerca
     private void performSearch(String searchTerm){

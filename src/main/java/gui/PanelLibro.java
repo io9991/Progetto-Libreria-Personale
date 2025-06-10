@@ -103,11 +103,18 @@ public class PanelLibro extends JPanel {
         isbnLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         isbnLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        JLabel statoLabel = new JLabel("Stato: " + libro.getStato());
+        isbnLabel.setForeground(Common_constants.colore_font_titoli);
+        isbnLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        isbnLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
         infoPanel.add(titoloLabel);
         infoPanel.add(Box.createVerticalStrut(5));
         infoPanel.add(autoreLabel);
         infoPanel.add(Box.createVerticalStrut(5));
         infoPanel.add(genereLabel);
+        infoPanel.add(Box.createVerticalStrut(5));
+        infoPanel.add(statoLabel);
         infoPanel.add(Box.createVerticalStrut(5));
         infoPanel.add(isbnLabel);
         infoPanel.add(Box.createVerticalGlue()); // Spinge i componenti verso l'alto
