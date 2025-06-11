@@ -1,29 +1,86 @@
 package db;
 
-//ho deciso di implementare questa classe usando il dp SINGLETON
+
 
 //importo quello che mi serve
 import java.sql.*;
+import java.util.List;
 
+import builder.Libro;
 import constants.Common_constants;
 import constants.Common_constants.*;
+
+/*
+    Classe che rappresenta il database, il quale sarà al centro
+    delle operazioni che verranno fatte, in particolare data
+    l'esigenza che si ha di connettersi a questo db, ho deciso di implementarlo
+    seguendo la struttura del design pattern SINGLETON, applicando la tecnica
+    del lazy inizialization
+ */
 
 public class MyJavaDBC {
 
     private static MyJavaDBC instance = null;
     private Connection connection;
 
-    //costruttore vuoto
+    //attributi per gestire URL della connessione
+    //serve per il testing
+    private String hostCorrente;
+    private String portaCorrente;
+    private String dbNameCorrente;
+    private String usernameCorrente;
+    private String passCorrente;
+//
+//    //costruttore privato
+//    private MyJavaDBC(){
+//        try{
+//            this.connection = DriverManager.getConnection(Common_constants.DB_URL, Common_constants.DB_USERNAME, Common_constants.DB_PASSWORD);
+//            System.out.println("Connessione al database stabilita con successo.");
+//        }catch(SQLException e){
+//            e.printStackTrace();
+//            System.exit(1);
+//        }
+//    }
+
     private MyJavaDBC(){
+        String urlIntero = Common_constants.DB_URL;
+        //a questo punto basta scrivere solo un url diverso
+        //che varia per l'ultima parte
+        String[] split = urlIntero.split("/");
+        String parteHost = split[2];
+        String[] portaHost = parteHost.split(":");
+
+        this.hostCorrente = portaHost[0];
+        this.portaCorrente = portaHost[1];
+        this.dbNameCorrente = split[split.length - 1];
+
+        this.usernameCorrente = Common_constants.DB_USERNAME;
+        this.passCorrente = Common_constants.DB_PASSWORD;
+
+        initializeConnection();
+
+    }
+
+    private void initializeConnection(){
 
         try{
-            this.connection = DriverManager.getConnection(Common_constants.DB_URL, Common_constants.DB_USERNAME, Common_constants.DB_PASSWORD);
-            System.out.println("Connessione al database stabilita con successo.");
-        }catch(SQLException e){
+            if(connection != null && !connection.isClosed()){
+                connection.close();
+            }
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            String connectionUrl = "jdbc:mysql://" + hostCorrente + ":" + portaCorrente + "/" + dbNameCorrente;
+            connection = DriverManager.getConnection(connectionUrl, usernameCorrente, passCorrente);
+            System.out.println("Connessione al database '" + connectionUrl + "' stabilita con successo.");
+
+        }catch(SQLException | ClassNotFoundException e){
+            System.err.println("Errore durante la connessione al database '" + dbNameCorrente + "': " + e.getMessage());
             e.printStackTrace();
-            System.exit(1);
+            // È fondamentale propagare l'eccezione o gestirla in modo che i test falliscano se la connessione fallisce
+            throw new RuntimeException("Impossibile connettersi al database: " + dbNameCorrente, e);
         }
     }
+
 
     public static synchronized MyJavaDBC getInstance(){
         if(instance == null){
@@ -32,17 +89,41 @@ public class MyJavaDBC {
         return instance;
     }
 
-    public Connection getConnection(){
-
-        try{
-            if(connection == null || connection.isClosed()){
-                System.out.println("connessione persa o chiusa");
-            }
-        }catch (SQLException e){
-            e.printStackTrace();
+//    public Connection getConnection() throws SQLException {
+//        if (connection == null || connection.isClosed()) {
+//            System.err.println("Connessione al database persa o chiusa. Tentativo di ristabilire la connessione...");
+//
+//            try {
+//                // Tentativo di riconnessione
+//                connection = DriverManager.getConnection(Common_constants.DB_URL, Common_constants.DB_USERNAME, Common_constants.DB_PASSWORD);
+//                System.out.println("Riconnessione al database riuscita.");
+//            } catch (SQLException e) {
+//                System.err.println("Fallimento nella riconnessione al database: " + e.getMessage());
+//                throw e; // Rilancia l'eccezione originale o una nuova
+//            }
+//        }
+//        return connection;
+//    }
+//
+    public Connection getConnection() throws SQLException {
+        if (connection == null || connection.isClosed()) {
+            System.err.println("Connessione al database persa o chiusa. Tentativo di ristabilire la connessione...");
+            initializeConnection(); // Prova a ristabilire
         }
         return connection;
     }
+
+
+    //per il testing
+    public void setNameForTest(String testDbName){
+
+        if(!this.dbNameCorrente.equals(testDbName)){
+            this.dbNameCorrente = testDbName;
+            initializeConnection();
+        }
+
+    }
+
 
     //chiudiamo la connessione
     public void closeConnection(){
