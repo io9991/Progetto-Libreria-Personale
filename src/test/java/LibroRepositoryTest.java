@@ -19,30 +19,58 @@ public class LibroRepositoryTest {
 
     private LibroRepository libroRepository;
     private Connection testConnection;
+    // Salva l'URL originale del DB principale per ripristinarlo dopo la suite di test
+    private static String originalDbUrl;
+
+    public LibroRepositoryTest(){
+    }
+
 
     @BeforeEach
-    void setUp() throws SQLException{
+    void setUp() throws Exception {
 
-        //sfrutto le classi che ho aggiunto nel
-        //db per il testing
-        MyJavaDBC.getInstance().setNameForTest("library_test_schema");
+        if (originalDbUrl == null) {
+            originalDbUrl = Common_constants.DB_URL;
+            System.out.println("DEBUG: Salvato URL DB originale: " + originalDbUrl);
+        }
+
+        MyJavaDBC.getInstance().closeConnection();
+        System.out.println("DEBUG: Connessione MyJavaDBC chiuso per setup test");
+
+        //per testare il singleton che gestisce connessioni globali
+        java.lang.reflect.Field instanceField = MyJavaDBC.class.getDeclaredField("instance");
+        instanceField.setAccessible(true);
+        instanceField.set(null, null);
+
+        Common_constants.DB_URL = "jdbc:h2:mem:testdb_" + UUID.randomUUID().toString() + ";MODE=MySQL;DB_CLOSE_DELAY=-1";
 
         testConnection = MyJavaDBC.getInstance().getConnection();
+        System.out.println("DEBUG: Connessione di test H2 in-memory stabilita.");
 
-        //pulisco tutto per non rischiare di avere problemi
-
-        try(Statement stmt = testConnection.createStatement()){
-            stmt.executeUpdate("DELETE FROM " + Common_constants.DB_LIBRI_TABLE_NAME);
-            System.out.println("Tabella '" + Common_constants.DB_LIBRI_TABLE_NAME + "' pulizia in DB di test");
-
-        }catch (SQLException e){
-            System.out.println("Errore");
+        try (Statement stmt = testConnection.createStatement()) {
+            stmt.executeUpdate("DROP TABLE IF EXISTS " + Common_constants.DB_LIBRI_TABLE_NAME);
+            System.out.println("DEBUG: Tabella '" + Common_constants.DB_LIBRI_TABLE_NAME + "' droppata (se esisteva).");
+            String createTableSQL = "CREATE TABLE " + Common_constants.DB_LIBRI_TABLE_NAME + " (" +
+                    "codISBN VARCHAR(255) PRIMARY KEY NOT NULL," +
+                    "titolo VARCHAR(255) NOT NULL," +
+                    "autore VARCHAR(255) NOT NULL," +
+                    "genere VARCHAR(255)," +
+                    "valutazione INT," +
+                    "stat VARCHAR(50) NOT NULL" +
+                    ");";
+            stmt.executeUpdate(createTableSQL);
+            System.out.println("DEBUG: Tabella '" + Common_constants.DB_LIBRI_TABLE_NAME + "' ricreata in DB H2 in-memory.");
+        } catch (SQLException e) {
+            System.err.println("ERRORE: Errore durante la pulizia/creazione del database di test H2: " + e.getMessage());
             e.printStackTrace();
-            throw e;
+            throw e; // Rilancia per fallire il setup del test se la pulizia/ricreazione non riesce
         }
 
         libroRepository = new LibroRepositoryImpl();
+        System.out.println("DEBUG: LibroRepositoryImpl inizializzato per i test.");
+
     }
+
 
     //dopo ogniTest
     @AfterEach
@@ -67,10 +95,10 @@ public class LibroRepositoryTest {
      */
 
     @Test
-    void testInserisciLibro() throws SQLException{
+    void testInserisciLibro_buono() throws SQLException{
         Libro libro = new Libro.Builder()
                 .setTitolo("Origin")
-                .setAutore("Dan Brown")
+                .setAutore("DanBrown")
                 .setCodiceISBN("21312sdf")
                 .setGenereAppartenenza("Thriller")
                 .setValutazione(5)
@@ -92,6 +120,8 @@ public class LibroRepositoryTest {
         assertEquals(Stato.LETTO,libriPresenti.get(0).getStato());
     }
 
+    //todo test per lanciare errore
+
     //test per verificare che funzioni la cancellazione
     @Test
     void testRimuoviLibro() throws SQLException{
@@ -112,47 +142,44 @@ public class LibroRepositoryTest {
         assertTrue(libriPresenti.isEmpty());
     }
 
-    /*
-    //Test per la modifica, creo un libro, lo inserisco e lo modifico e poi controllo
-    @Test
-    void modificaLibro() throws SQLException{
 
-        //mettiamo il nostro libro
-        Libro libroVecchio = new Libro.Builder()
-                .setTitolo("DivinaCommedia-DaModificare")
-                .setAutore("Dante")
-                .setCodiceISBN("VECCHIO-21312sdf")
+    //test per la modifica
+    @Test
+    void modificaLibro_buono() throws SQLException{
+
+        System.out.println("TEST: Esecuzione testModificaLibro_Successo");
+        Libro libroOriginale = new Libro.Builder()
+                .setTitolo("Il Vecchio e il Mare")
+                .setAutore("Ernest Hemingway")
+                .setCodiceISBN("OLD-BOOK-123")
                 .setGenereAppartenenza("Narrativa")
-                .setValutazione(5)
+                .setValutazione(4)
                 .setStato(Stato.DA_LEGGERE)
                 .build();
-        libroRepository.inserisciLibro(libroVecchio);
-        //lo modifico
-
-        Libro recupera = libroRepository.LibroConIsbn("VECCHIO-21312sdf");
-        assertNotNull(recupera);
-        assertEquals("DivinaCommedia-DaModificare", recupera.getTitolo());
-        assertEquals(Stato.DA_LEGGERE, recupera.getStato());
-
-        Libro libModificato = new Libro.Builder()
-                .setTitolo("Divina Commedia (nuova edizione)")
-                .setAutore("Dante Alighieri")
-                .setCodiceISBN("VECCHIO-21312sdf")
-                .setGenereAppartenenza("Narrativa")
-                .setValutazione(5)
-                .setStato(Stato.LETTO)
+        libroRepository.inserisciLibro(libroOriginale);
+        Libro libroModificato = new Libro.Builder()
+                .setTitolo("Il Vecchio e il Mare (Edizione Aggiornata)") // Modifica titolo
+                .setAutore("Ernest Hemingway")
+                .setCodiceISBN("OLD-BOOK-123") // Stesso ISBN per identificare
+                .setGenereAppartenenza("Classico") // Modifica genere
+                .setValutazione(5) // Modifica valutazione
+                .setStato(Stato.LETTO) // Modifica stato
                 .build();
 
-        libroRepository.modificaLibro(libModificato);
+        libroRepository.modificaLibro(libroModificato);
 
-        Libro libroDopoModifica = libroRepository.LibroConIsbn("VECCHIO-21312sdf");
+        Libro libroRecuperatoDopoModifica = libroRepository.LibroConIsbn("OLD-BOOK-123");
 
-        assertEquals("Divina Commedia (nuova edizione)", libroDopoModifica.getTitolo(), "il titolo non è aggiornato correttamente");
-
-
+        assertNotNull(libroRecuperatoDopoModifica, "Il libro modificato dovrebbe essere recuperabile.");
+        assertEquals("Il Vecchio e il Mare (Edizione Aggiornata)", libroRecuperatoDopoModifica.getTitolo(), "Il titolo non è stato aggiornato.");
+        assertEquals("Classico", libroRecuperatoDopoModifica.getGenere_appartenenza(), "Il genere non è stato aggiornato.");
+        assertEquals(5, libroRecuperatoDopoModifica.getValutazione(), "La valutazione non è stata aggiornata.");
+        assertEquals(Stato.LETTO, libroRecuperatoDopoModifica.getStato(), "Lo stato non è stato aggiornato.");
+        assertEquals(1, libroRepository.tuttiLibri().size(), "Dovrebbe esserci ancora solo un libro nel DB.");
     }
 
-     */
+
+
 
 
 }

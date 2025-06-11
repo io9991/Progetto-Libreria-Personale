@@ -18,14 +18,14 @@ public class GestoreLibreria implements Subject{
     private List<Observer> osservatori;
     private LibroRepository libroRepository;
 
-    private GestoreLibreria(){
+    private GestoreLibreria(LibroRepository repository){
         osservatori = new ArrayList<>();
-        this.libroRepository = new LibroRepositoryImpl();
+        this.libroRepository = repository;
     }
 
-    public static synchronized GestoreLibreria getInstance(){
+    public static synchronized GestoreLibreria getInstance(LibroRepository repository){
         if(instance == null ){
-            instance = new GestoreLibreria();
+            instance = new GestoreLibreria(repository);
         }
         return instance;
     }

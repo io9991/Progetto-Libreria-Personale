@@ -22,6 +22,7 @@ public class PanelLibro extends JPanel {
     // Riduci le dimensioni dei riquadri
     private static final int larghezza = 150; // Era 200
     private static final int altezza = 200;  // Era 250
+    private final GestoreLibreria gestoreLibreria;
 
     private Libro libro;
 
@@ -34,8 +35,9 @@ public class PanelLibro extends JPanel {
         return altezza;
     }
 
-    public PanelLibro(Libro libro) {
+    public PanelLibro(Libro libro, GestoreLibreria gestoreLibreria) {
         this.libro = Objects.requireNonNull(libro, "L'oggetto Libro non può essere null.");
+        this.gestoreLibreria = Objects.requireNonNull(gestoreLibreria, "L'oggetto GestoreLibreria non può essere null."); // Inietta l'istanza
 
         setLayout(new BorderLayout(5, 5));
         setPreferredSize(new Dimension(larghezza, altezza));
@@ -50,7 +52,7 @@ public class PanelLibro extends JPanel {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                AggiungiLibroForm modificaForm = new AggiungiLibroForm("Modifica il tuo libro", libro);
+                AggiungiLibroForm modificaForm = new AggiungiLibroForm("Modifica il tuo libro", libro, PanelLibro.this.gestoreLibreria);
                 System.out.println("DEBUG: PanelLibro - Cliccato per modificare. Libro passato: " +
                         (PanelLibro.this.libro != null ?
                                 PanelLibro.this.libro.getTitolo() + " (ISBN: " + PanelLibro.this.libro.getCodice_ISBN() + ")" :
@@ -159,7 +161,8 @@ public class PanelLibro extends JPanel {
                 //logica cancellazione seguendo l'observer
                 try {
                     //richiamiamo la funzione che permette l'eleminazione del libro
-                    GestoreLibreria.getInstance().rimuoviLibro(libro);
+                    //GestoreLibreria.getInstance().rimuoviLibro(libro);
+                    this.gestoreLibreria.rimuoviLibro(libro);
                     JOptionPane.showMessageDialog(this, "Libro eliminato!");
                     //il gestore libreria notifica l'homeform della modifica avvenuta
                 }catch(SQLException sqe){

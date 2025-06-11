@@ -21,9 +21,13 @@ public class Common_constants {
     public static final Color colore_croce = Color.decode("#b84141");
 
     //costanti del DB
-    public static final String DB_URL = "jdbc:mysql://127.0.0.1:3306/library_schema";
-    public static final String DB_USERNAME = "java_user";
-    public static final String DB_PASSWORD = "1234";
+//    public static final String DB_URL = "jdbc:mysql://127.0.0.1:3306/library_schema";
+//    public static final String DB_USERNAME = "java_user";
+//    public static final String DB_PASSWORD = "1234";
+//    public static final String DB_LIBRI_TABLE_NAME = "LIBRI";
+    public static String DB_URL = "jdbc:h2:~/library_db;AUTO_SERVER=TRUE;MODE=MySQL";
+    public static final String DB_USERNAME = "sa"; // Utente predefinito per H2 (system administrator)
+    public static final String DB_PASSWORD = ""; // Password vuota per default in H2
     public static final String DB_LIBRI_TABLE_NAME = "LIBRI";
 
 

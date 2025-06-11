@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import builder.Libro;
 import builder.Stato;
 import observer.Observer;
+import repository.LibroRepositoryImpl;
 import service.GestoreLibreria;
 
 /*
@@ -44,7 +45,7 @@ public class HomeForm extends Form implements Observer {
 
     public HomeForm(String titolo) throws SQLException {
         super(titolo);
-        this.gestoreLibreria = GestoreLibreria.getInstance();
+        this.gestoreLibreria = GestoreLibreria.getInstance(new LibroRepositoryImpl());
         this.gestoreLibreria.attach(this);
         getContentPane().setLayout(new BorderLayout());
         addGuiComponent();
@@ -174,7 +175,7 @@ public class HomeForm extends Form implements Observer {
 
         // Listener per il pulsante "Aggiungi" che permette di aggiungere un libro
         aggiungi.addActionListener(e -> {
-            AggiungiLibroForm addBookForm = new AggiungiLibroForm("Aggiungi un nuovo libro", null);
+            AggiungiLibroForm addBookForm = new AggiungiLibroForm("Aggiungi un nuovo libro", null, this.gestoreLibreria);
             addBookForm.setModal(true);
             addBookForm.setVisible(true);
         });
@@ -588,7 +589,7 @@ public class HomeForm extends Form implements Observer {
         bookRowPanel.setOpaque(false);
 
         for (Libro libro : libriPerCategoria) {
-            bookRowPanel.add(new PanelLibro(libro));
+            bookRowPanel.add(new PanelLibro(libro, this.gestoreLibreria));
         }
 
         JScrollPane rowScrollPane = new JScrollPane(bookRowPanel);

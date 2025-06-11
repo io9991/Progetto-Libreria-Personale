@@ -37,9 +37,9 @@ public class AggiungiLibroForm extends JDialog {
     private Libro libroToModify;
 
 
-    public AggiungiLibroForm(String titolo, Libro libroDaModificare) {
+    public AggiungiLibroForm(String titolo, Libro libroDaModificare, GestoreLibreria gestoreLibreria) {
         super((JFrame) null, titolo, true);
-        this.gestoreLibreria = GestoreLibreria.getInstance();
+        this.gestoreLibreria = gestoreLibreria;
         this.mediator = new AggiungiLibroFormMediator();
         this.libroToModify = libroDaModificare; // Assegna qui il libro da modificare
 

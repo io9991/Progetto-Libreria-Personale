@@ -23,14 +23,14 @@ public class MyJavaDBC {
     private static MyJavaDBC instance = null;
     private Connection connection;
 
-    //attributi per gestire URL della connessione
-    //serve per il testing
-    private String hostCorrente;
-    private String portaCorrente;
-    private String dbNameCorrente;
-    private String usernameCorrente;
-    private String passCorrente;
-//
+//    //attributi per gestire URL della connessione
+//    //serve per il testing
+//    private String hostCorrente;
+//    private String portaCorrente;
+//    private String dbNameCorrente;
+//    private String usernameCorrente;
+//    private String passCorrente;
+////
 //    //costruttore privato
 //    private MyJavaDBC(){
 //        try{
@@ -43,21 +43,21 @@ public class MyJavaDBC {
 //    }
 
     private MyJavaDBC(){
-        String urlIntero = Common_constants.DB_URL;
-        //a questo punto basta scrivere solo un url diverso
-        //che varia per l'ultima parte
-        String[] split = urlIntero.split("/");
-        String parteHost = split[2];
-        String[] portaHost = parteHost.split(":");
-
-        this.hostCorrente = portaHost[0];
-        this.portaCorrente = portaHost[1];
-        this.dbNameCorrente = split[split.length - 1];
-
-        this.usernameCorrente = Common_constants.DB_USERNAME;
-        this.passCorrente = Common_constants.DB_PASSWORD;
-
+//        String urlIntero = Common_constants.DB_URL;
+//        //a questo punto basta scrivere solo un url diverso
+//        //che varia per l'ultima parte
+//        String[] split = urlIntero.split("/");
+//        String parteHost = split[2];
+//        String[] portaHost = parteHost.split(":");
+//
+//        this.hostCorrente = portaHost[0];
+//        this.portaCorrente = portaHost[1];
+//        this.dbNameCorrente = split[split.length - 1];
+//
+//        this.usernameCorrente = Common_constants.DB_USERNAME;
+//        this.passCorrente = Common_constants.DB_PASSWORD;
         initializeConnection();
+        createTableIfNotExist();
 
     }
 
@@ -67,18 +67,49 @@ public class MyJavaDBC {
             if(connection != null && !connection.isClosed()){
                 connection.close();
             }
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            //carica il driver H2
+            Class.forName("org.h2.Driver");
+//
+//            String connectionUrl = "jdbc:mysql://" + hostCorrente + ":" + portaCorrente + "/" + dbNameCorrente;
+//            connection = DriverManager.getConnection(connectionUrl, usernameCorrente, passCorrente);
+//            System.out.println("Connessione al database '" + connectionUrl + "' stabilita con successo.");
+            connection = DriverManager.getConnection(
+                    Common_constants.DB_URL,
+                    Common_constants.DB_USERNAME,
+                    Common_constants.DB_PASSWORD
+            );
+            System.out.println("Connessione al database H2 '" + Common_constants.DB_URL + "' stabilita con successo.");
 
-            String connectionUrl = "jdbc:mysql://" + hostCorrente + ":" + portaCorrente + "/" + dbNameCorrente;
-            connection = DriverManager.getConnection(connectionUrl, usernameCorrente, passCorrente);
-            System.out.println("Connessione al database '" + connectionUrl + "' stabilita con successo.");
 
         }catch(SQLException | ClassNotFoundException e){
-            System.err.println("Errore durante la connessione al database '" + dbNameCorrente + "': " + e.getMessage());
+            System.err.println("Errore durante la connessione al database H2: " + e.getMessage());
             e.printStackTrace();
-            // È fondamentale propagare l'eccezione o gestirla in modo che i test falliscano se la connessione fallisce
-            throw new RuntimeException("Impossibile connettersi al database: " + dbNameCorrente, e);
+            throw new RuntimeException("Impossibile connettersi al database H2.", e);
         }
+    }
+
+
+    //metodo per creare la tabella LIBRI se non esiste
+    private void createTableIfNotExist(){
+
+        String creaTable = "CREATE TABLE IF NOT EXISTS " + Common_constants.DB_LIBRI_TABLE_NAME + " (" +
+                            "codISBN  VARCHAR(255) PRIMARY KEY NOT NULL," +
+                            "titolo VARCHAR(255) NOT NULL," +
+                            "autore VARCHAR(255) NOT NULL," +
+                            "genere VARCHAR(255)," +
+                            "valutazione INT," +
+                            "stat VARCHAR(50) NOT NULL" +
+                            ");";
+
+        try (Statement stmt = connection.createStatement()){
+            stmt.executeUpdate(creaTable);
+            System.out.println("Tabella '" + Common_constants.DB_LIBRI_TABLE_NAME + "' creata o già esistente.");
+        }catch(SQLException e){
+            System.err.println("Errore durante la creazione della tabella: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Impossibile creare la tabella 'LIBRI'.", e);
+        }
+
     }
 
 
@@ -115,14 +146,14 @@ public class MyJavaDBC {
 
 
     //per il testing
-    public void setNameForTest(String testDbName){
-
-        if(!this.dbNameCorrente.equals(testDbName)){
-            this.dbNameCorrente = testDbName;
-            initializeConnection();
-        }
-
-    }
+//    public void setNameForTest(String testDbName){
+//
+//        if(!this.dbNameCorrente.equals(testDbName)){
+//            this.dbNameCorrente = testDbName;
+//            initializeConnection();
+//        }
+//
+//    }
 
 
     //chiudiamo la connessione
