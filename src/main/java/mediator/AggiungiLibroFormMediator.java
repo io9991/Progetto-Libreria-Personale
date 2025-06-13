@@ -29,27 +29,11 @@ public class AggiungiLibroFormMediator implements MediatorIF{
     // Metodo chiamato dagli elementi della form quando cambiano
     @Override
     public void widgetCambiato(JComponent widget) {
-        // Se il cambiamento proviene da uno dei campi di testo obbligatori
-//        if (widget == titoloField || widget == autoreField || widget == isbnField) {
-//            if (saveButton != null) {
-//                saveButton.setEnabled(areRequiredFieldsFilled());
-//            }
+
         boolean allFieldsFilled = !titoloField.getText().trim().isEmpty() &&
                 !autoreField.getText().trim().isEmpty() &&
                 !isbnField.getText().trim().isEmpty();
         saveButton.setEnabled(allFieldsFilled);
         }
-        // Se il cambiamento proviene dal pulsante di salvataggio (nel caso volessi aggiungere logica qui, es. un JOptionPane di conferma)
-        // else if (widget == saveButton) {
-        //     // Potresti aggiungere qui una logica post-salvataggio o una conferma
-        //     System.out.println("Pulsante Salva premuto.");
-        // }
 
-
-    // Controlla se i campi obbligatori sono stati riempiti
-//    private boolean areRequiredFieldsFilled() {
-//        return titoloField != null && !titoloField.getText().trim().isEmpty() &&
-//                autoreField != null && !autoreField.getText().trim().isEmpty() &&
-//                isbnField != null && !isbnField.getText().trim().isEmpty();
-//    }
 }

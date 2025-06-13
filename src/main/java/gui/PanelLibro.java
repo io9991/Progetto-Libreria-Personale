@@ -16,6 +16,13 @@ import java.sql.SQLException;
 import java.util.Objects;
 
 
+/*
+    Classe che raggruppa le info del libro e le mostra sotto forma
+    di pannello, inoltre presenta la "x" che permetterà di eliminare
+    il libro su cui sto cliccando la x, se clicco l'intero panel
+    posso modificare il libro.
+ */
+
 
 public class PanelLibro extends JPanel {
 
@@ -56,14 +63,10 @@ public class PanelLibro extends JPanel {
                 System.out.println("DEBUG: PanelLibro - Cliccato per modificare. Libro passato: " +
                         (PanelLibro.this.libro != null ?
                                 PanelLibro.this.libro.getTitolo() + " (ISBN: " + PanelLibro.this.libro.getCodice_ISBN() + ")" :
-                                "NULL (Problema qui!)"));
+                                "NULL"));
 
                 modificaForm.setVisible(true);
-             //   modificaForm.setModal(true);
-              //  JOptionPane.showMessageDialog(PanelLibro.this,
-              //          "Hai cliccato sul libro: " + libro.getTitolo() + "\nISBN: " + libro.getCodice_ISBN(),
-              //          "Dettagli Libro (TEST)",
-              //          JOptionPane.INFORMATION_MESSAGE);
+
             }
 
             @Override

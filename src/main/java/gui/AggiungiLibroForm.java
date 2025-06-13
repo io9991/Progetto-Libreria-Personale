@@ -21,8 +21,24 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Objects;
 
+/*
+    Questo form permette l'aggiunta/modifica di un nuovo libro nella libreria
+    rispetta i vincoli più volte ribaditi e per farlo implementa
+    il pattern MEDIATOR che ha il compito di rendere meno "legati"
+    alcuni componenti del sistema.
+    Ovviamente quando viene inserito/modificato un libro è importante aggiornare
+    la vista quindi avremo un collegamento con il gestoreLibreria
+ */
+
 
 public class AggiungiLibroForm extends JDialog {
+
+    /*
+        preparo quello che serve per la parte grafica stando attenta a dare una buona esperienza utente,
+        dunque per scelta progettuale onda evitare errori sia la valutazione che lo stato li rendo delle
+        JComboBox, questo implica che l'utente sarà vincolato a scegliere tra quelli proposti, se non ci fossero stati
+        questi vincoli ogni qual volta si fosse inserito un parametro non corretto ci sarebbe stato un popup di richiamo
+     */
 
     private JTextField titoloField;
     private JTextField autoreField;
@@ -38,10 +54,15 @@ public class AggiungiLibroForm extends JDialog {
 
 
     public AggiungiLibroForm(String titolo, Libro libroDaModificare, GestoreLibreria gestoreLibreria) {
+
+        //ricordo che questo form viene usato sia per quanto riguarda l'aggiunta, che per quanto riguarda la
+        //modifica e si capisce perchè nel caso dell'aggiunta il libro da modificare sarà null
+
         super((JFrame) null, titolo, true);
         this.gestoreLibreria = gestoreLibreria;
         this.mediator = new AggiungiLibroFormMediator();
-        this.libroToModify = libroDaModificare; // Assegna qui il libro da modificare
+        this.libroToModify = libroDaModificare;   //libro che vogliamo venga modificato
+
 
         if (this.libroToModify != null) {
             System.out.println("AggiungiLibroForm: Aperto in modalità MODIFICA per libro: " + this.libroToModify.getTitolo() + " (ISBN: '" + this.libroToModify.getCodice_ISBN() + "')");
@@ -72,6 +93,8 @@ public class AggiungiLibroForm extends JDialog {
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
+
+        //qui mi occupo di tutta la parte relativa alla grafica
 
         Font labelFont = new Font("Arial", Font.BOLD, 16);
         Color labelColor = Common_constants.colore_font_titoli;
@@ -196,7 +219,9 @@ public class AggiungiLibroForm extends JDialog {
         mediator.setSaveButton(saveButton);
     }
 
+
     private void setupListeners() {
+        //aggiorniamo il mediator
         DocumentListener documentListener = new DocumentListener() {
             @Override
             public void changedUpdate(DocumentEvent e) { updateMediator(); }
@@ -210,10 +235,13 @@ public class AggiungiLibroForm extends JDialog {
             }
         };
 
+
         titoloField.getDocument().addDocumentListener(documentListener);
         autoreField.getDocument().addDocumentListener(documentListener);
         isbnField.getDocument().addDocumentListener(documentListener);
 
+
+        //al cliccare del pulsante di salvataggio si attiva il metodo handleSaveAction
         saveButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -223,9 +251,10 @@ public class AggiungiLibroForm extends JDialog {
     }
 
     private void handleSaveAction() {
+        //prendiamo gli attributi dai vari campi
         String titolo = titoloField.getText().trim();
         String autore = autoreField.getText().trim();
-        String isbn = isbnField.getText().trim(); // Ottieni l'ISBN dal campo
+        String isbn = isbnField.getText().trim();
         String genere = genereField.getText().trim();
         int valutazione = (Integer) valutazioneComboBox.getSelectedItem();
         Stato stato = (Stato) statoComboBox.getSelectedItem();
@@ -240,6 +269,8 @@ public class AggiungiLibroForm extends JDialog {
         try {
             if (libroToModify == null) {
                 // Modalità Aggiungi Nuovo Libro
+                //andiamo a creare il nuoco libro
+                //con il builder e con le info che abbiamo raccolto
                 Libro nuovoLibro = new Libro.Builder()
                         .setTitolo(titolo)
                         .setAutore(autore)
@@ -250,7 +281,15 @@ public class AggiungiLibroForm extends JDialog {
                         .build();
 
                 System.out.println("AggiungiLibroForm: Tentativo di AGGIUNGERE libro con ISBN: '" + nuovoLibro.getCodice_ISBN() + "'");
+
+                /*
+                    come prima accennato, quello che succede cliccando
+                    è che si deve aggiornare la lista
+                 */
+
                 gestoreLibreria.aggiungiLibro(nuovoLibro);
+
+
                 JOptionPane.showMessageDialog(AggiungiLibroForm.this,
                         "Libro aggiunto con successo!", "Successo", JOptionPane.INFORMATION_MESSAGE);
             } else {
@@ -264,11 +303,16 @@ public class AggiungiLibroForm extends JDialog {
                 libroToModify.setStato(stato);
 
                 System.out.println("AggiungiLibroForm: Tentativo di MODIFICARE libro con ISBN originale: '" + libroToModify.getCodice_ISBN() + "'");
+                //va aggiornata la vista
                 gestoreLibreria.aggiornaLibro(libroToModify);
                 JOptionPane.showMessageDialog(AggiungiLibroForm.this,
                         "Libro aggiornato con successo!", "Successo", JOptionPane.INFORMATION_MESSAGE);
             }
             dispose();
+
+            //è importante soprattutto in fase di prova stampare le varie problematiche/errori
+            //così da poter intervenire
+            //avere traccia di quelli che sono i casi limite aiuta soprattutto nel testing
         } catch (SQLException ex) {
             System.err.println("ERRORE SQL in AggiungiLibroForm: " + ex.getMessage());
             ex.printStackTrace();
@@ -290,6 +334,11 @@ public class AggiungiLibroForm extends JDialog {
         }
     }
 
+    /*
+        metodo che serve quando siamo in modalità modifica per prepopolare
+        quelli che sono i campi
+     */
+
     private void populateFields(Libro libro) {
         titoloField.setText(libro.getTitolo());
         autoreField.setText(libro.getAutore());
@@ -299,11 +348,5 @@ public class AggiungiLibroForm extends JDialog {
         statoComboBox.setSelectedItem(libro.getStato());
         // L'ISBN è già impostato come non modificabile nel initComponents
     }
-
-    // Metodo di debug temporaneo per AggiungiLibroForm
-    public Libro getLibroToModifyDebug() {
-        return libroToModify;
-    }
-
 
 }

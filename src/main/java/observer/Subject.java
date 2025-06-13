@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 public interface Subject {
 
-    //i metodi sono quelli di attach e detach dell'obsercer, difatti mantiene un riferimento a questo
+    //i metodi sono quelli di attach e detach dell'observer, difatti mantiene un riferimento a questo
     //attach(:Observer)
     //detach(:Observer)
     //e poi serve il metodo notify che serve per notificare dei cambiamenti

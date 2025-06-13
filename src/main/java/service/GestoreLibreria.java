@@ -11,6 +11,12 @@ import repository.LibroRepositoryImpl;
 import java.sql.SQLException;
 import java.util.*;
 
+/*
+    gestoreLibreria è quello che nel contesto del pattern OBSERVER
+    rapprensenta la concreteSubject, che contiene lo stato
+    a cui gli oggetti che osservano, quindi osservatori sono interessati
+    quando modifica lo stato invia una notifica
+ */
 
 public class GestoreLibreria implements Subject{
 
@@ -53,23 +59,21 @@ public class GestoreLibreria implements Subject{
     }
 
     public void aggiungiLibro(Libro libro) throws SQLException{
-        // Rimuovo il try-catch per propagare l'errore alla GUI
-        libroRepository.inserisciLibro(libro); // Mantengo il nome del metodo
+        libroRepository.inserisciLibro(libro);
         notifyObserver(); // Notifica solo se l'inserimento è riuscito
     }
 
     public void rimuoviLibro(Libro libro) throws SQLException {
-        libroRepository.eliminaLibro(libro); // Mantengo il nome del metodo
+        libroRepository.eliminaLibro(libro);
         notifyObserver();
     }
 
     public List<Libro> restituisciLibri() throws SQLException{
-        return libroRepository.tuttiLibri(); // Mantengo il nome del metodo
+        return libroRepository.tuttiLibri();
     }
 
     public void aggiornaLibro(Libro libro) throws SQLException{
-        // Rimuovo il try-catch per propagare l'errore alla GUI
-        libroRepository.modificaLibro(libro); // Mantengo il nome del metodo
+        libroRepository.modificaLibro(libro);
         notifyObserver();
     }
 
@@ -95,14 +99,14 @@ public class GestoreLibreria implements Subject{
 
         switch (filterType) {
             case "AUTORE":
-                return libroRepository.cercaLibriByAutore(filterValue); // Nuovo metodo da aggiungere
+                return libroRepository.cercaLibriByAutore(filterValue);
             case "GENERE":
-                return libroRepository.cercaLibriByGenere(filterValue); // Nuovo metodo da aggiungere
+                return libroRepository.cercaLibriByGenere(filterValue);
             case "VALUTAZIONE":
-                // Questo è un caso speciale perché Valutazione è un int
-                return libroRepository.cercaLibriByValutazione(Integer.parseInt(filterValue)); // Nuovo metodo
+
+                return libroRepository.cercaLibriByValutazione(Integer.parseInt(filterValue));
             default:
-                return libroRepository.tuttiLibri(); // Nessun filtro valido, restituisci tutto
+                return libroRepository.tuttiLibri();
         }
     }
 
