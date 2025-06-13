@@ -317,8 +317,7 @@ public class AggiungiLibroForm extends JDialog {
             System.err.println("ERRORE SQL in AggiungiLibroForm: " + ex.getMessage());
             ex.printStackTrace();
             JOptionPane.showMessageDialog(AggiungiLibroForm.this,
-                    "Errore durante l'operazione sul database: " + ex.getMessage() + "\nControlla la console per i dettagli.",
-                    "Errore Database", JOptionPane.ERROR_MESSAGE);
+                    "Errore : non puoi aggiungere un libro che abbia lo stesso codice Isbn di un altro libro esistente");
         } catch (IllegalArgumentException ex) {
             System.err.println("ERRORE DI VALIDAZIONE/COSTRUZIONE LIBRO in AggiungiLibroForm: " + ex.getMessage());
             ex.printStackTrace();

@@ -17,9 +17,6 @@ import observer.Observer;
 import repository.LibroRepositoryImpl;
 import service.GestoreLibreria;
 
-/*
-todo controlla il refresh come pulsante
- */
 
 
 /*
